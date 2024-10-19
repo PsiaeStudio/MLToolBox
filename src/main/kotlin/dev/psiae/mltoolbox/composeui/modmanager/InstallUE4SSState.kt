@@ -74,6 +74,10 @@ class InstallUE4SSState(
         coroutineScope.cancel()
     }
 
+    private fun init() {
+
+    }
+
     fun pickUE4SSArchive(awtWindow: java.awt.Window) {
         coroutineScope.launch {
             if (pickUE4SSArchiveCompletion?.isActive != true) {
@@ -141,15 +145,19 @@ class InstallUE4SSState(
                     var open = true
                     open = installDir.walkBottomUp().all { f ->
                         if (f.isFile) {
-                            var ch: RandomAccessFile? = null
-                            try {
-                                ch = RandomAccessFile(f, "rw")
-                                ch.channel.lock()
-                            } catch (ex: IOException) {
-                                open = false
-                                lockedFile = f
-                            } finally {
-                                ch?.close()
+                            if (f.canWrite()) {
+                                var ch: RandomAccessFile? = null
+                                try {
+                                    ch = RandomAccessFile(f, "rw")
+                                    ch.channel.lock()
+                                } catch (ex: IOException) {
+                                    open = false
+                                    lockedFile = f
+                                } finally {
+                                    ch?.close()
+                                }
+                            } else {
+                                // TODO
                             }
                         }
                         open
@@ -247,15 +255,19 @@ class InstallUE4SSState(
                     var open = true
                     open = ue4ssFolder.walkBottomUp().all { f ->
                         if (f.isFile) {
-                            var ch: RandomAccessFile? = null
-                            try {
-                                ch = RandomAccessFile(f, "rw")
-                                ch!!.channel.lock()
-                            } catch (ex: IOException) {
-                                open = false
-                                lockedFile = f
-                            } finally {
-                                ch?.close()
+                            if (f.canWrite()) {
+                                var ch: RandomAccessFile? = null
+                                try {
+                                    ch = RandomAccessFile(f, "rw")
+                                    ch!!.channel.lock()
+                                } catch (ex: IOException) {
+                                    open = false
+                                    lockedFile = f
+                                } finally {
+                                    ch?.close()
+                                }
+                            } else {
+                                // TODO
                             }
                         }
                         open
@@ -321,7 +333,5 @@ class InstallUE4SSState(
         return false
     }
 
-    private fun init() {
 
-    }
 }

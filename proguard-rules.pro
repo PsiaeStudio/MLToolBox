@@ -18,3 +18,6 @@
 
 #keep runtime annotation for JNA
 -keepattributes RuntimeVisibleAnnotations
+
+-printseeds obfuscation/seeds.txt
+-printmapping obfuscation/mapping.txt

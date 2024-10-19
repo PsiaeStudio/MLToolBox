@@ -7,6 +7,7 @@ import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -50,7 +51,7 @@ fun ModManagerMainScreen() {
                 SelectGameWorkingDirectoryScreen(modManagerScreen)
                 return@CompositionLocalProvider
             }
-            if (modManagerScreen.changingWorkerDir) {
+            if (modManagerScreen.changingWorkDir) {
                 ChangeGameWorkingDirectory(modManagerScreen)
             }
             Column {
@@ -107,38 +108,46 @@ fun ModManagerMainScreen() {
                         )
                     }
                 }
-                HeightSpacer(6.dp)
-                if (modManagerScreen.checkingUE4SSInstallation) {
-                    val scroll = rememberScrollState()
-                    val viewPortDp = with(LocalDensity.current) {
-                        scroll.viewportSize.toDp()
-                    }
-                    Column(
+                Box(
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    Box(
                         modifier = Modifier
-                            .fillMaxSize()
-                            .verticalScroll(scroll),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
+                            .then(if (modManagerScreen.checkingUE4SSInstallation) Modifier.alpha(0.1f) else Modifier)
                     ) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(160.dp),
-                            color = Color(0xFFc9cb78)
-                        )
-                        HeightSpacer((viewPortDp/10).coerceIn(30.dp, 100.dp))
-                        Text(
-                            modifier = Modifier.align(Alignment.CenterHorizontally),
-                            text = modManagerScreen.checkingUE4SSInstallationStatusMessage ?: "Checking UE4SS Installation ...",
-                            style = Material3Theme.typography.titleMedium,
-                            color = Color(252, 252, 252),
-                            maxLines = 1
-                        )
-                        HeightSpacer(24.dp)
+                        if (modManagerScreen.isUE4SSNotInstalled) {
+                            UE4SSNotInstalledUI(modManagerScreen)
+                        } else {
+                            DashBoardUI(modManagerScreen)
+                        }
                     }
-                }
-                if (modManagerScreen.isUE4SSNotInstalled) {
-                    UE4SSNotInstalledUI(modManagerScreen)
-                } else {
-                    DashBoardUI(modManagerScreen)
+                    if (modManagerScreen.checkingUE4SSInstallation) {
+                        val scroll = rememberScrollState()
+                        val viewPortDp = with(LocalDensity.current) {
+                            scroll.viewportSize.toDp()
+                        }
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .verticalScroll(scroll),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(160.dp),
+                                color = Color(0xFFc9cb78)
+                            )
+                            HeightSpacer((viewPortDp/10).coerceIn(30.dp, 100.dp))
+                            Text(
+                                modifier = Modifier.align(Alignment.CenterHorizontally),
+                                text = modManagerScreen.checkingUE4SSInstallationStatusMessage ?: "Checking UE4SS Installation ...",
+                                style = Material3Theme.typography.titleMedium,
+                                color = Color(252, 252, 252),
+                                maxLines = 1
+                            )
+                            HeightSpacer(24.dp)
+                        }
+                    }
                 }
             }
             if (modManagerScreen.installUE4SS) {
@@ -154,16 +163,40 @@ fun ModManagerMainScreen() {
 private fun DashBoardUI(
     modManagerScreenState: ModManagerScreenState
 ) {
-    val scroll = rememberScrollState()
-    val viewPortDp = with(LocalDensity.current) {
-        scroll.viewportSize.toDp()
-    }
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(scroll),
-    ) {
-        CommonsSection(modManagerScreenState)
+    val scrollState = rememberScrollState()
+    Row {
+        Column(
+            modifier = Modifier
+                .weight(1f, false)
+                .fillMaxSize()
+                .verticalScroll(scrollState),
+        ) {
+            CommonsSection(modManagerScreenState)
+            InstalledModListSection(modManagerScreenState)
+        }
+        VerticalScrollbar(
+            modifier = Modifier
+                .height(
+                    with(LocalDensity.current) {
+                        remember(this) {
+                            derivedStateOf { scrollState.viewportSize.toDp() }
+                        }.value
+                    }
+                )
+                .padding(start = 8.dp, end = 8.dp, top = 4.dp, bottom = 4.dp)
+                .then(
+                    if (scrollState.canScrollForward || scrollState.canScrollBackward)
+                        Modifier.background(Color.White.copy(alpha = 0.06f))
+                    else Modifier
+                ),
+            adapter = rememberScrollbarAdapter(scrollState),
+            style = remember {
+                defaultScrollbarStyle().copy(
+                    unhoverColor = Color.White.copy(alpha = 0.25f),
+                    hoverColor = Color.White.copy(alpha = 0.50f)
+                )
+            }
+        )
     }
 }
 
@@ -234,7 +267,9 @@ private fun CommonsSectionContent(
                         modifier = Modifier.alpha(if (enabled) 1f else 0.68f),
                         text = "Install UE4SS",
                         style = Material3Theme.typography.labelLarge,
-                        color = Color(0xFFc9cb78)
+                        color = Color(0xFFc9cb78),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
             }
@@ -264,7 +299,9 @@ private fun CommonsSectionContent(
                         modifier = Modifier.alpha(if (enabled) 1f else 0.68f),
                         text = "Install UE4SS Mod",
                         style = Material3Theme.typography.labelLarge,
-                        color = Color(0xFFc9cb78)
+                        color = Color(0xFFc9cb78),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
             }
@@ -308,7 +345,9 @@ private fun CommonsSectionContent(
                         modifier = Modifier.alpha(if (enabled) 1f else 0.68f),
                         text = "Launch Manor Lords",
                         style = Material3Theme.typography.labelLarge,
-                        color = Color(0xFFc9cb78)
+                        color = Color(0xFFc9cb78),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
             }

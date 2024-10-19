@@ -6,6 +6,7 @@ import dev.psiae.mltoolbox.composeui.core.locals.LocalComposeUIContext
 import dev.psiae.mltoolbox.java.jFile
 import dev.psiae.mltoolbox.utilskt.isNullOrNotActive
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.first
 import java.io.File
 
 @Composable
@@ -35,12 +36,15 @@ class ModManagerScreenState(
             "_coroutineScope is null"
         }
 
+    val immediateDispatcher
+        get() = uiContext.dispatchContext.mainDispatcher.immediate
+
     var gameBinaryFile by mutableStateOf<jFile?>(null)
         private set
 
     val hasGameWorkingDirectory by derivedStateOf { gameBinaryFile != null }
 
-    var changingWorkerDir by mutableStateOf(false)
+    var changingWorkDir by mutableStateOf(false)
         private set
 
     var installUE4SS by mutableStateOf(false)
@@ -67,6 +71,11 @@ class ModManagerScreenState(
     var checkingUE4SSInstallationStatusMessage by mutableStateOf<String?>(null)
         private set
 
+    var refreshDashboardWorker: Job? = null
+        private set
+
+    var installedModListState by mutableStateOf<InstalledModListState?>(null)
+
     fun stateEnter() {
         _coroutineScope = CoroutineScope(uiContext.dispatchContext.mainDispatcher)
 
@@ -80,7 +89,7 @@ class ModManagerScreenState(
 
     private fun init() {
         if (gameBinaryFile != null) {
-            inputCheckUE4SSInstalled()
+            refreshDashboard()
         }
     }
 
@@ -95,11 +104,11 @@ class ModManagerScreenState(
             gameBinaryFile = file
             onChosenGameBinaryFile(file)
         }
-        changingWorkerDir = false
+        changingWorkDir = false
     }
 
     fun onChosenGameBinaryFile(file: File?) {
-        inputCheckUE4SSInstalled()
+        refreshDashboard()
     }
 
     fun runOnUiContext(block: () -> Unit) {
@@ -107,7 +116,7 @@ class ModManagerScreenState(
     }
 
     fun userInputChangeWorkingDir() {
-        changingWorkerDir = true
+        changingWorkDir = true
     }
 
     fun userInputInstallUE4SS() {
@@ -117,7 +126,7 @@ class ModManagerScreenState(
     fun installUE4SSExit() {
         installUE4SS = false
 
-        inputCheckUE4SSInstalled()
+        refreshDashboard()
     }
 
     fun userInputInstallUE4SSMod() {
@@ -127,7 +136,7 @@ class ModManagerScreenState(
     fun userInputInstallUE4SSModExit() {
         installUE4SSMod = false
 
-        inputCheckUE4SSInstalled()
+        refreshDashboard()
     }
 
     fun launchGame() {
@@ -152,6 +161,31 @@ class ModManagerScreenState(
         ue4ssInstallationCheckWorker?.cancel()
         ue4ssInstallationCheckWorker = coroutineScope.launch {
             doCheckUE4SSInstalled()
+        }
+    }
+
+    fun requireGameBinaryFile(): jFile {
+        return checkNotNull(gameBinaryFile) {
+            "ModManager: gameBinaryFile not provided"
+        }
+    }
+
+    fun refreshDashboard() {
+        val last = refreshDashboardWorker?.apply { cancel() }
+        refreshDashboardWorker = coroutineScope.launch {
+            last?.apply {
+                try { cancelAndJoin() } catch (_: CancellationException) {}
+            }
+            ue4ssInstallationCheckWorker?.apply {
+                try { cancelAndJoin() } catch (_: CancellationException) {}
+            }
+            // TODO: redo changingWorkDir
+            snapshotFlow { changingWorkDir }.first { !it }
+            inputCheckUE4SSInstalled().also {
+                try { ue4ssInstallationCheckWorker!!.cancelAndJoin() } catch (_: CancellationException) {}
+            }
+            installedModListState?.refreshSuspend()
+            checkingUE4SSInstallation = false
         }
     }
 
@@ -205,7 +239,7 @@ class ModManagerScreenState(
                 return@withContext
             }
         }
-        checkingUE4SSInstallation = false
+        /*checkingUE4SSInstallation = false*/
         checkingUE4SSInstallationStatusMessage = null
     }
 }

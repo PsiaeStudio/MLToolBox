@@ -62,7 +62,7 @@ fun SelectGameWorkingDirectoryScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(remember { Color(0XFF14140c) })
+            .background(Material3Theme.colorScheme.surface)
             .defaultSurfaceGestureModifiers()
     ) {
         val scrollState = rememberScrollState()
@@ -81,20 +81,20 @@ fun SelectGameWorkingDirectoryScreen(
                         .padding(horizontal = 48.dp)
                         .sizeIn(maxWidth = 1400.dp, maxHeight = 1400.dp)
                         .align(Alignment.CenterHorizontally),
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFF48482d), contentColor = Color(0xFF2c0b12))
+                    colors = CardDefaults.cardColors(Material3Theme.colorScheme.surfaceContainerHigh, contentColor = Material3Theme.colorScheme.onSurface)
                 ) {
                     Column(
                         Modifier.padding(24.dp)
                     ) {
                         Text(
                             text = "Select the game executable file (.exe) to continue",
-                            color = Color(0xFFe5e5c0),
+                            color = Material3Theme.colorScheme.onSurface,
                             style = Material3Theme.typography.titleMedium
                         )
                         HeightSpacer(4.dp)
                         Text(
                             text = "Their location are usually defined as follows:",
-                            color = Color(0xFFe5e5c0),
+                            color = Material3Theme.colorScheme.onSurface,
                             style = Material3Theme.typography.labelSmall
                         )
                         HeightSpacer(16.dp)
@@ -118,7 +118,7 @@ fun SelectGameWorkingDirectoryScreen(
                                             append("Steam".replace(' ', '\u00A0'))
                                         }
                                     },
-                                    color = Color(0xFFe5e5c0),
+                                    color = Material3Theme.colorScheme.onSurface,
                                     style = Material3Theme.typography.bodySmall,
                                 )
                                 Text(
@@ -128,7 +128,7 @@ fun SelectGameWorkingDirectoryScreen(
                                             append("**\\SteamLibrary\\steamapps\\common\\Manor Lords\\ManorLords\\Binaries\\Win64\\ManorLords-Win64-Shipping.exe".replace(' ', '\u00A0'))
                                         }
                                     },
-                                    color = Color(0xFFe5e5c0),
+                                    color = Material3Theme.colorScheme.onSurface,
                                     style = Material3Theme.typography.bodySmall,
                                 )
                             }
@@ -154,7 +154,7 @@ fun SelectGameWorkingDirectoryScreen(
                                             append("Xbox pc gamepass".replace(' ', '\u00A0'))
                                         }
                                     },
-                                    color = Color(0xFFe5e5c0),
+                                    color = Material3Theme.colorScheme.onSurface,
                                     style = Material3Theme.typography.bodySmall,
                                 )
                                 Text(
@@ -163,7 +163,7 @@ fun SelectGameWorkingDirectoryScreen(
                                         withStyle(SpanStyle(fontWeight = FontWeight.Medium)) {
                                             append("**\\XboxGames\\*\\Manor Lords\\Content\\ManorLords\\Binaries\\WinGDK\\ManorLords-WinGDK-Shipping.exe".replace(' ', '\u00A0'))                                    }
                                     },
-                                    color = Color(0xFFe5e5c0),
+                                    color = Material3Theme.colorScheme.onSurface,
                                     style = Material3Theme.typography.bodySmall,
                                 )
                             }
@@ -206,7 +206,7 @@ fun SelectGameWorkingDirectoryScreen(
                                             fp?.takeLastWhile { c -> !dash.also { dash = c == '\\' } }
                                         }
                                     }
-                                    val color = Color.White.copy(alpha = 0.78f)
+                                    val color = Material3Theme.colorScheme.onSurface.copy(alpha = 0.78f)
                                     Text(
                                         modifier = Modifier
                                             .weight(1f, fill = false)

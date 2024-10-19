@@ -4,6 +4,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.window.AwtWindow
+import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import dev.psiae.mltoolbox.app.MLToolBoxApp
 import java.awt.Dimension
@@ -12,6 +13,8 @@ import java.awt.Toolkit
 import java.awt.datatransfer.StringSelection
 import java.awt.event.ActionEvent
 import java.awt.event.KeyEvent
+import java.awt.event.WindowEvent
+import java.awt.event.WindowListener
 import javax.swing.*
 import kotlin.system.exitProcess
 
@@ -51,6 +54,27 @@ fun MainGUI(
                                 screenBounds.y + screenInsets.top + location.y
                             )
                         }
+                    }
+                    .apply {
+                        addWindowListener(
+                            object : WindowListener {
+                                override fun windowOpened(e: WindowEvent?) {
+                                }
+                                override fun windowClosing(e: WindowEvent?) {
+                                    exitProcess(0)
+                                }
+                                override fun windowClosed(e: WindowEvent?) {
+                                }
+                                override fun windowIconified(e: WindowEvent?) {
+                                }
+                                override fun windowDeiconified(e: WindowEvent?) {
+                                }
+                                override fun windowActivated(e: WindowEvent?) {
+                                }
+                                override fun windowDeactivated(e: WindowEvent?) {
+                                }
+                            }
+                        )
                     }
             },
             dispose = {

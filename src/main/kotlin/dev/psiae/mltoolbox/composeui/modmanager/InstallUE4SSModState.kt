@@ -144,15 +144,19 @@ class InstallUE4SSModState(
                     var open = true
                     open = installDir.walkBottomUp().all { f ->
                         if (f.isFile) {
-                            var ch: RandomAccessFile? = null
-                            try {
-                                ch = RandomAccessFile(f, "rw")
-                                ch.channel.lock()
-                            } catch (ex: IOException) {
-                                open = false
-                                lockedFile = f
-                            } finally {
-                                ch?.close()
+                            if (f.canWrite()) {
+                                var ch: RandomAccessFile? = null
+                                try {
+                                    ch = RandomAccessFile(f, "rw")
+                                    ch.channel.lock()
+                                } catch (ex: IOException) {
+                                    open = false
+                                    lockedFile = f
+                                } finally {
+                                    ch?.close()
+                                }
+                            } else {
+                                // TODO
                             }
                         }
                         open
@@ -294,15 +298,19 @@ class InstallUE4SSModState(
                     var dirOpen = true
                     dir.walkBottomUp().forEach { f ->
                         if (f.isFile) {
-                            var ch: RandomAccessFile? = null
-                            try {
-                                ch = RandomAccessFile(f, "rw")
-                                ch!!.channel.lock()
-                            } catch (ex: IOException) {
-                                lockedFile = f
-                                dirOpen = false
-                            } finally {
-                                ch?.close()
+                            if (f.canWrite()) {
+                                var ch: RandomAccessFile? = null
+                                try {
+                                    ch = RandomAccessFile(f, "rw")
+                                    ch!!.channel.lock()
+                                } catch (ex: IOException) {
+                                    lockedFile = f
+                                    dirOpen = false
+                                } finally {
+                                    ch?.close()
+                                }
+                            } else {
+                                // TODO
                             }
                         }
                     }

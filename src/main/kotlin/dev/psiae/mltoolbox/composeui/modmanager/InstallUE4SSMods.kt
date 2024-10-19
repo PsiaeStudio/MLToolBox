@@ -43,7 +43,7 @@ fun InstallUE4SSMods(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(remember { Color(0XFF14140c) })
+            .background(Material3Theme.colorScheme.surface)
             .defaultSurfaceGestureModifiers()
     ) {
         val snackbar = remember { SnackbarHostState() }
@@ -62,9 +62,9 @@ fun InstallUE4SSMods(
                         .fillMaxWidth()
                         .background(
                             color = MD3Theme.surfaceColorAtElevation(
-                                surface = Color(0XFF14140c),
+                                surface = Material3Theme.colorScheme.surface,
                                 elevation = if (topBarScrolling) 2.dp else 0.dp,
-                                tint = Color(0xFFc2cd7c)
+                                tint = Material3Theme.colorScheme.primary
                             )
                         )
                 ) {
@@ -180,11 +180,7 @@ private fun SelectModArchiveCard(
                 modifier = Modifier
                     .align(Alignment.Center)
                 /*.verticalScroll(rememberScrollState())*/,
-                colors = CardDefaults.cardColors(
-                    containerColor = Color(
-                        0xFF46492f
-                    ), contentColor = Color(0xFF2c0b12)
-                )
+                colors = CardDefaults.cardColors(containerColor = Material3Theme.colorScheme.surfaceContainerHigh, contentColor = Material3Theme.colorScheme.onSurface)
             ) {
                 val contentMinSize = when {
                     leastConstraintsMax < 1000.dp -> 300.dp
@@ -200,14 +196,14 @@ private fun SelectModArchiveCard(
                     ) {
                         CircularProgressIndicator(
                             modifier = Modifier.size(160.dp),
-                            color = Color(0xFFc9cb78)
+                            color = Material3Theme.colorScheme.secondary
                         )
                         HeightSpacer(30.dp)
                         Text(
                             modifier = Modifier,
                             text = ue4ssState.statusMessage ?: "",
                             style = Material3Theme.typography.titleMedium,
-                            color = Color(0xFFe5e5c0),
+                            color = Material3Theme.colorScheme.onSurface,
                             maxLines = 1
                         )
                     }
@@ -267,12 +263,12 @@ private fun SelectModArchiveCard(
                             modifier = Modifier.padding(12.dp).size(128.dp),
                             painter = painterResource("drawable/icon_import_mm_128px.png"),
                             contentDescription = null,
-                            tint = Color(0xFFc9c8a5)
+                            tint = Material3Theme.colorScheme.secondary
                         )
                         HeightSpacer(12.dp)
                         Text(
                             text = "Select or Drop the archive (*.zip) here",
-                            color = Color(0xFFe5e5c0),
+                            color = Material3Theme.colorScheme.onSurface,
                             style = Material3Theme.typography.bodyMedium
                         )
 
@@ -290,7 +286,7 @@ private fun SelectModArchiveCard(
                                 Row(
                                     modifier = Modifier
                                         .clip(_root_ide_package_.androidx.compose.foundation.shape.RoundedCornerShape(12.dp))
-                                        .background(Color(0xFFffb4ab))
+                                        .background(Material3Theme.colorScheme.error)
                                         .clickable(
                                             interactionSource = ins,
                                             indication = LocalIndication.current
@@ -312,7 +308,7 @@ private fun SelectModArchiveCard(
                                     Text(
                                         modifier = Modifier.weight(1f, false),
                                         text = text,
-                                        color = Color(0xFF690005),
+                                        color = Material3Theme.colorScheme.onError,
                                         style = Material3Theme.typography.bodyMedium,
                                     )
                                     Box(modifier = Modifier.size(32.dp).align(Alignment.Top)) {
@@ -321,7 +317,7 @@ private fun SelectModArchiveCard(
                                                 modifier = Modifier.size(24.dp).align(Alignment.Center),
                                                 painter = painterResource("drawable/icon_copy_24px.png"),
                                                 contentDescription = null,
-                                                tint = Color(0xFF690005)
+                                                tint = Material3Theme.colorScheme.onError
                                             )
                                         }
                                     }
@@ -341,7 +337,7 @@ private fun SelectModArchiveCard(
                                 Row(
                                     modifier = Modifier
                                         .clip(_root_ide_package_.androidx.compose.foundation.shape.RoundedCornerShape(12.dp))
-                                        .background(Color(0xFFffb4ab))
+                                        .background(Material3Theme.colorScheme.error)
                                         .clickable(
                                             interactionSource = ins,
                                             indication = LocalIndication.current
@@ -363,7 +359,7 @@ private fun SelectModArchiveCard(
                                     Text(
                                         modifier = Modifier.weight(1f, false),
                                         text = text,
-                                        color = Color(0xFF690005),
+                                        color = Material3Theme.colorScheme.onError,
                                         style = Material3Theme.typography.bodyMedium,
                                     )
                                     Box(modifier = Modifier.size(32.dp).align(Alignment.Top)) {
@@ -372,7 +368,7 @@ private fun SelectModArchiveCard(
                                                 modifier = Modifier.size(24.dp).align(Alignment.Center),
                                                 painter = painterResource("drawable/icon_copy_24px.png"),
                                                 contentDescription = null,
-                                                tint = Color(0xFF690005)
+                                                tint = Material3Theme.colorScheme.onError
                                             )
                                         }
                                     }
@@ -386,7 +382,7 @@ private fun SelectModArchiveCard(
                             Text(
                                 modifier = Modifier.weight(1f, false),
                                 text = text,
-                                color = Color(0xFFc2cd7c),
+                                color = Material3Theme.colorScheme.primary,
                                 style = Material3Theme.typography.bodyMedium,
                                 fontWeight = FontWeight.Medium
                             )
