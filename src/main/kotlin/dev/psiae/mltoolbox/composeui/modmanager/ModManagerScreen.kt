@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -26,6 +27,7 @@ import dev.psiae.mltoolbox.composeui.HeightSpacer
 import dev.psiae.mltoolbox.composeui.LocalApplication
 import dev.psiae.mltoolbox.composeui.WidthSpacer
 import dev.psiae.mltoolbox.composeui.gestures.defaultSurfaceGestureModifiers
+import dev.psiae.mltoolbox.composeui.theme.md3.LocalIsDarkTheme
 import dev.psiae.mltoolbox.composeui.theme.md3.Material3Theme
 import dev.psiae.mltoolbox.uifoundation.themes.md3.MD3Spec
 import dev.psiae.mltoolbox.uifoundation.themes.md3.incrementsDp
@@ -41,7 +43,14 @@ fun ModManagerMainScreen() {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(remember { Color(0XFF14140c) })
+            .background(Material3Theme.colorScheme.surfaceDim)
+            /*.then(
+                if (!LocalIsDarkTheme.current)
+                    Modifier
+                        .border(1.dp, Material3Theme.colorScheme.outlineVariant)
+                else
+                    Modifier
+            )*/
             .defaultSurfaceGestureModifiers()
     ) {
         CompositionLocalProvider(
@@ -60,10 +69,15 @@ fun ModManagerMainScreen() {
                     .defaultMinSize(minWidth = 1200.dp)
                     .defaultMinSize(minHeight = 36.dp)
                     .clip(RoundedCornerShape(4.dp))
-                    .shadow(elevation = 2.dp, RoundedCornerShape(4.dp))
+                    .then(
+                        if (LocalIsDarkTheme.current)
+                            Modifier.shadow(elevation = 2.dp, RoundedCornerShape(4.dp))
+                        else
+                            Modifier.border(width = 1.dp, Material3Theme.colorScheme.outlineVariant, RoundedCornerShape(4.dp))
+                    )
                     .clickable { modManagerScreen.userInputChangeWorkingDir() }
-                    .background(remember { Color(0xFF313128) })
-                    .padding(MD3Spec.padding.incrementsDp(1).dp)
+                    .background(Material3Theme.colorScheme.inverseOnSurface)
+                    .padding(MD3Spec.padding.incrementsDp(2).dp)
                 ) {
                     Row(
                         modifier = Modifier
@@ -84,9 +98,7 @@ fun ModManagerMainScreen() {
                                     fp?.takeLastWhile { c -> !dash.also { dash = c == '\\' } }
                                 }
                             }
-                            val color = remember(f) {
-                                fp?.let { Color(250, 250, 250) } ?: Color.White.copy(alpha = 0.78f)
-                            }
+                            val color = Material3Theme.colorScheme.onSurface.copy(alpha = 0.78f)
                             Text(
                                 modifier = Modifier
                                     .weight(1f, fill = false)
@@ -104,45 +116,17 @@ fun ModManagerMainScreen() {
                             modifier = Modifier.size(18.dp).align(Alignment.CenterVertically),
                             painter = painterResource("drawable/icon_folder_96px.png"),
                             contentDescription = null,
-                            tint = remember { Color(0xFFc9c8a5) }
+                            tint = Material3Theme.colorScheme.secondary
                         )
                     }
                 }
                 Box(
                     modifier = Modifier.fillMaxSize()
                 ) {
+                    DashBoardUI(modManagerScreen)
                     if (modManagerScreen.isUE4SSNotInstalled) {
                         UE4SSNotInstalledUI(modManagerScreen)
-                    } else {
-                        DashBoardUI(modManagerScreen)
                     }
-                    /*if (modManagerScreen.checkingUE4SSInstallation) {
-                        val scroll = rememberScrollState()
-                        val viewPortDp = with(LocalDensity.current) {
-                            scroll.viewportSize.toDp()
-                        }
-                        Column(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .verticalScroll(scroll),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
-                        ) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(160.dp),
-                                color = Color(0xFFc9cb78)
-                            )
-                            HeightSpacer((viewPortDp/10).coerceIn(30.dp, 100.dp))
-                            Text(
-                                modifier = Modifier.align(Alignment.CenterHorizontally),
-                                text = modManagerScreen.checkingUE4SSInstallationStatusMessage ?: "Checking UE4SS Installation ...",
-                                style = Material3Theme.typography.titleMedium,
-                                color = Color(252, 252, 252),
-                                maxLines = 1
-                            )
-                            HeightSpacer(24.dp)
-                        }
-                    }*/
                 }
             }
             if (modManagerScreen.installUE4SS) {
@@ -241,7 +225,7 @@ private fun CommonsSectionContent(
                     .clip(RoundedCornerShape(50))
                     .border(
                         width = 1.dp,
-                        color = Color(0xFF938F99).copy(alpha = 0.12f),
+                        color = Material3Theme.colorScheme.outline,
                         shape = RoundedCornerShape(50)
                     )
                     .clickable(enabled = enabled) { modManagerScreen.userInputInstallUE4SS() }
@@ -262,7 +246,7 @@ private fun CommonsSectionContent(
                         modifier = Modifier.alpha(if (enabled) 1f else 0.68f),
                         text = "Install UE4SS",
                         style = Material3Theme.typography.labelLarge,
-                        color = Color(0xFFc9cb78),
+                        color = Material3Theme.colorScheme.primary,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -279,7 +263,7 @@ private fun CommonsSectionContent(
                     .clip(RoundedCornerShape(50))
                     .border(
                         width = 1.dp,
-                        color = Color(0xFF938F99).copy(alpha = 0.12f),
+                        color = Material3Theme.colorScheme.outline,
                         shape = RoundedCornerShape(50)
                     )
                     .clickable(enabled = enabled) { modManagerScreen.userInputInstallUE4SSMod() }
@@ -294,7 +278,7 @@ private fun CommonsSectionContent(
                         modifier = Modifier.alpha(if (enabled) 1f else 0.68f),
                         text = "Install UE4SS Mod",
                         style = Material3Theme.typography.labelLarge,
-                        color = Color(0xFFc9cb78),
+                        color = Material3Theme.colorScheme.primary,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -311,7 +295,7 @@ private fun CommonsSectionContent(
                     .clip(RoundedCornerShape(50))
                     .border(
                         width = 1.dp,
-                        color = Color(0xFF938F99).copy(alpha = 0.12f),
+                        color = Material3Theme.colorScheme.outline,
                         shape = RoundedCornerShape(50)
                     )
                     .clickable(enabled = enabled) { modManagerScreen.launchGame() }
@@ -340,7 +324,7 @@ private fun CommonsSectionContent(
                         modifier = Modifier.alpha(if (enabled) 1f else 0.68f),
                         text = "Launch Manor Lords",
                         style = Material3Theme.typography.labelLarge,
-                        color = Color(0xFFc9cb78),
+                        color = Material3Theme.colorScheme.primary,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -360,6 +344,7 @@ private fun UE4SSNotInstalledUI(
     }
     Column(
         modifier = Modifier
+            .background(Material3Theme.colorScheme.surfaceDim)
             .fillMaxSize()
             .verticalScroll(scroll),
         horizontalAlignment = Alignment.CenterHorizontally,

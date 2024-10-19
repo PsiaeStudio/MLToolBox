@@ -1,17 +1,16 @@
 package dev.psiae.mltoolbox.composeui.main
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.*
+import androidx.compose.foundation.interaction.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.BottomNavigation
 import androidx.compose.material.Icon
 import androidx.compose.material.Text
-import androidx.compose.material.ripple.rememberRipple
-import androidx.compose.material3.NavigationDrawerItem
+import androidx.compose.material.ripple.LocalRippleTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.BiasAlignment
@@ -19,24 +18,33 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.layoutId
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.*
 import androidx.compose.ui.util.fastFirst
 import androidx.compose.ui.util.fastForEach
+import androidx.compose.ui.util.fastForEachIndexed
 import dev.psiae.mltoolbox.composeui.*
-import dev.psiae.mltoolbox.composeui.CustomWin32TitleBarBehavior
-import dev.psiae.mltoolbox.composeui.supportproject.supportProjectMainScreenDrawerItem
 import dev.psiae.mltoolbox.composeui.gestures.defaultSurfaceGestureModifiers
-import dev.psiae.mltoolbox.composeui.text.nonScaledFontSize
-import dev.psiae.mltoolbox.platform.win32.CustomDecorationParameters
 import dev.psiae.mltoolbox.composeui.modmanager.modManagerMainScreenDrawerItem
+import dev.psiae.mltoolbox.composeui.supportproject.supportProjectMainScreenDrawerItem
+import dev.psiae.mltoolbox.composeui.text.nonScaledFontSize
+import dev.psiae.mltoolbox.composeui.theme.md3.LocalIsDarkTheme
 import dev.psiae.mltoolbox.composeui.theme.md3.Material3Theme
-import dev.psiae.mltoolbox.uifoundation.themes.md3.*
+import dev.psiae.mltoolbox.composeui.theme.md3.surfaceColorAtElevation
+import dev.psiae.mltoolbox.platform.win32.CustomDecorationParameters
+import dev.psiae.mltoolbox.uifoundation.themes.md3.MD3Spec
+import dev.psiae.mltoolbox.uifoundation.themes.md3.MD3Theme
+import dev.psiae.mltoolbox.uifoundation.themes.md3.margin
+import dev.psiae.mltoolbox.uifoundation.themes.md3.spacingOfWindowWidthDp
 import kotlin.math.max
 
 @Composable
@@ -56,7 +64,17 @@ fun MainScreen(
     ) {
         MainScreenLayoutSurface(
             modifier = Modifier,
-            color = remember { Color(0xFF202018) }
+            color = animateColorAsState(
+                if (LocalIsDarkTheme.current) {
+                    Material3Theme.colorScheme.surfaceContainer
+                } else {
+                    MD3Theme.surfaceColorAtElevation(
+                        Material3Theme.colorScheme.surfaceContainer,
+                        Material3Theme.colorScheme.surfaceTint,
+                        1.dp
+                    )
+                },
+            ).value,
         )
         MainScreenLayoutContent(
             contentPadding = run {
@@ -193,7 +211,7 @@ private fun MainScreenLayoutIconTitle(
             text = "MANOR LORDS Toolbox",
             style = Material3Theme.typography.titleMedium,
             fontSize = Material3Theme.typography.titleMedium.nonScaledFontSize(),
-            color = Color.White,
+            color = Material3Theme.colorScheme.onSurface,
             overflow = TextOverflow.Ellipsis
         )
     }
@@ -227,7 +245,7 @@ private fun MainScreenLayoutCaptionControls(
                 modifier = Modifier.size(20.dp).align(Alignment.Center),
                 painter = painterResource("drawable/windowcontrol_minimize_win1.png"),
                 contentDescription = null,
-                tint = Color.White
+                tint = Material3Theme.colorScheme.onSurface
             )
         }
 
@@ -244,7 +262,7 @@ private fun MainScreenLayoutCaptionControls(
                     else
                         painterResource("drawable/windowcontrol_restore_down.png"),
                     contentDescription = null,
-                    tint = Color.White
+                    tint = Material3Theme.colorScheme.onSurface
                 )
             }
         }
@@ -256,7 +274,7 @@ private fun MainScreenLayoutCaptionControls(
                 modifier = Modifier.size(20.dp).align(Alignment.Center),
                 painter = painterResource("drawable/windowcontrol_close2.png"),
                 contentDescription = null,
-                tint = Color.White
+                tint = Material3Theme.colorScheme.onSurface
             )
         }
     }
@@ -272,35 +290,57 @@ fun MainScreenLayoutBody() {
             val dest = remember { mutableStateOf<StableList<MainDrawerDestination>>(StableList(emptyList()), neverEqualPolicy()) }
             Column(
                 modifier = Modifier
-                    .widthIn(
-                        max = 160.dp,
-                    )
+                    .widthIn(max = 160.dp),
             ) {
-                MainScreenLayoutDrawerNavigationPanel(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxHeight(),
-                    onDestinationClicked = { select ->
-                        if (!dest.value.contains(select)) {
-                            dest.value = StableList(
-                                ArrayList<MainDrawerDestination>()
-                                    .apply { addAll(dest.value) ; add(select) }
-                            )
-                        } else {
-                            dest.value = StableList(
-                                ArrayList<MainDrawerDestination>()
-                                    .apply {
-                                        dest.value.forEach {
-                                            if (it.id != select.id) add(it)
+                Column(
+                    modifier = Modifier.weight(1f)
+                ) {
+                    MainScreenLayoutDrawerNavigationPanel(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight(),
+                        onDestinationClicked = { select ->
+                            if (!dest.value.contains(select)) {
+                                dest.value = StableList(
+                                    ArrayList<MainDrawerDestination>()
+                                        .apply { addAll(dest.value) ; add(select) }
+                                )
+                            } else {
+                                dest.value = StableList(
+                                    ArrayList<MainDrawerDestination>()
+                                        .apply {
+                                            dest.value.forEach {
+                                                if (it.id != select.id) add(it)
+                                            }
+                                            add(select)
                                         }
-                                        add(select)
-                                    }
-                            )
-                        }
-                    },
-                    currentDestinationId = dest.value.lastOrNull()?.id
-                )
-                Box(modifier = Modifier.height(80.dp).width(100.dp))
+                                )
+                            }
+                        },
+                        currentDestinationId = dest.value.lastOrNull()?.id
+                    )
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.CenterHorizontally)
+                            .border(1.dp, Material3Theme.colorScheme.onSurface, RoundedCornerShape(50))
+                            .clip(RoundedCornerShape(50))
+                            .clickable { GLOBAL_THEME_IS_DARK = !GLOBAL_THEME_IS_DARK }
+                            .padding(12.dp)
+                    ) {
+                        val isDarkTheme = LocalIsDarkTheme.current
+
+                        Icon(
+                            modifier = Modifier.align(Alignment.Center).size(24.dp),
+                            painter = if (isDarkTheme)
+                                painterResource("drawable/icon_dark_theme_moon_outline_24px.png")
+                            else
+                                painterResource("drawable/icon_light_theme_sun_outline_24px.png"),
+                            contentDescription = null,
+                            tint = Material3Theme.colorScheme.onSurface,
+                        )
+                    }
+                }
+                HeightSpacer(40.dp)
             }
             Spacer(modifier = Modifier.width(MD3Spec.margin.spacingOfWindowWidthDp(maxWidth.value).dp))
             MainScreenLayoutScreenHost(dest.value)
@@ -319,7 +359,11 @@ fun MainScreenLayoutDrawerNavigationPanel(
             .fillMaxHeight()
             .verticalScroll(rememberScrollState())
     ) {
-        Column(modifier = Modifier) {
+        Column(
+            modifier = Modifier,
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            HeightSpacer(16.dp)
             listOf(
                 modManagerMainScreenDrawerItem(),
                 supportProjectMainScreenDrawerItem()
@@ -327,30 +371,23 @@ fun MainScreenLayoutDrawerNavigationPanel(
                 LaunchedEffect(Unit) {
                     onDestinationClicked(it.first())
                 }
-            }.fastForEach { item ->
-                val isSelected = currentDestinationId == item.id
-                DrawerNavigationPanelItem(
-                    modifier = Modifier
-                        .height(56.dp)
-                        .fillMaxWidth()
-                        .composed {
-                            Modifier
-                                .then(
-                                    if (isSelected)
-                                        Modifier.clip(RoundedCornerShape(50)).background(remember { Color(0xFF46492f) })
-                                    else
-                                        Modifier
-                                )
-                        }
-                        .clickable(
-                            enabled = !isSelected,
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = rememberRipple()
-                        ) { onDestinationClicked(item) },
-                    item = item,
-                    isSelected = isSelected
-                )
+            }.run {
+                fastForEachIndexed { i, item ->
+                    val isSelected = currentDestinationId == item.id
+                    DrawerNavigationPanelItem(
+                        modifier = Modifier
+                            .defaultMinSize(minWidth = 100.dp),
+                        item = item,
+                        isSelected = isSelected,
+                        enabled = true,
+                        onClick = { onDestinationClicked(item) }
+                    )
+                    if (i < lastIndex) {
+                        HeightSpacer(12.dp)
+                    }
+                }
             }
+            HeightSpacer(16.dp)
         }
     }
 }
@@ -382,58 +419,135 @@ fun MainScreenLayoutScreenHost(
 private fun DrawerNavigationPanelItem(
     modifier: Modifier,
     item: MainDrawerDestination,
-    isSelected: Boolean
+    isSelected: Boolean,
+    enabled: Boolean,
+    onClick: () -> Unit
 ) {
-    Row(
+    val interactionSource = remember { MutableInteractionSource() }
+    val isHovered = interactionSource.collectIsHoveredAsState().value
+    val isFocused = interactionSource.collectIsFocusedAsState().value
+    val isDragged = interactionSource.collectIsDraggedAsState().value
+    val selectedAnimationProgress = animateFloatAsState(
+        targetValue = if (isSelected) 1f else 0f,
+        animationSpec = tween(150)
+    )
+    Column(
         modifier = modifier
-            .padding(vertical = 10.dp, horizontal = 15.dp),
+            .defaultMinSize(minHeight = 56.dp, minWidth = 80.dp)
+            .alpha(if (enabled) 1f else 0.38f)
+            .clickable(
+                enabled = !isSelected && enabled,
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = onClick
+            ),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         if (item.icon != NoOpPainter) {
-            Icon(
-                modifier = Modifier.size(24.dp).align(Alignment.CenterVertically),
-                painter = item.icon,
-                tint = item.iconTint ?: Color.Unspecified,
-                contentDescription = null
-            )
-            Spacer(Modifier.width(MD3Spec.padding.incrementsDp(2).dp))
+            Box(
+                modifier = Modifier
+                    .defaultMinSize(minWidth = 56.dp, minHeight = 32.dp)
+                    .clip(RoundedCornerShape(50))
+                    .composed {
+                        val rippleTheme = LocalRippleTheme.current
+                        if (isHovered) {
+                            Modifier
+                                .background(color = rippleTheme.defaultColor().copy(alpha = rippleTheme.rippleAlpha().hoveredAlpha))
+                        } else {
+                            Modifier
+                        }
+                    }
+            ) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .then(
+                            if (isSelected)
+                                Modifier
+                                    .clip(RoundedCornerShape(50))
+                                    .background(Material3Theme.colorScheme.secondaryContainer)
+                                    .graphicsLayer { alpha = selectedAnimationProgress.value }
+                            else Modifier
+                        )
+                        .height(32.dp)
+                        .width(56.dp * selectedAnimationProgress.value)
+                )
+                Icon(
+                    modifier = Modifier
+                        .size(24.dp)
+                        .align(Alignment.Center),
+                    painter = item.icon,
+                    tint = item.iconTint ?: Color.Unspecified,
+                    contentDescription = null
+                )
+            }
+            HeightSpacer(4.dp)
             Text(
-                modifier = Modifier.align(Alignment.CenterVertically),
+                modifier = Modifier
+                    .align(Alignment.CenterHorizontally)
+                    .alpha(if (enabled) 1f else 0.78f),
                 text = item.name,
                 style = Material3Theme.typography.labelMedium,
                 overflow = TextOverflow.Ellipsis,
                 maxLines = 2,
-                color = Color(0xFFe5e3d6)
+                color = Material3Theme.colorScheme.onSurface
             )
         } else {
             Box(
-                modifier = Modifier.align(Alignment.CenterVertically)
+                modifier = Modifier
+                    .defaultMinSize(minWidth = 80.dp, minHeight = 56.dp)
+                    .clip(RoundedCornerShape(50))
+                    .composed {
+                        val rippleTheme = LocalRippleTheme.current
+                        if (isHovered) {
+                            Modifier
+                                .background(color = rippleTheme.defaultColor().copy(alpha = rippleTheme.rippleAlpha().hoveredAlpha))
+                        } else {
+                            Modifier
+                        }
+                    }
             ) {
-                Row(
-                    modifier = Modifier.alpha(0f)
+                var indicationWidth by remember { mutableStateOf(0.dp) }
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .then(
+                            if (isSelected)
+                                Modifier
+                                    .clip(RoundedCornerShape(50))
+                                    .background(Material3Theme.colorScheme.secondaryContainer)
+                                    .graphicsLayer { alpha = selectedAnimationProgress.value }
+                            else Modifier
+                        )
+                        .height(56.dp)
+                        .width(indicationWidth * selectedAnimationProgress.value)
+                )
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .composed {
+                            val density = LocalDensity.current
+                            Modifier.onGloballyPositioned { coord ->
+                                with(density) {
+                                    indicationWidth = coord.size.width.toDp()
+                                }
+                            }
+                        }
+                        .padding(horizontal = 12.dp)
                 ) {
-                    Box(Modifier.size(24.dp))
-                    Spacer(Modifier.width(MD3Spec.padding.incrementsDp(2).dp))
                     Text(
-                        modifier = Modifier.align(Alignment.CenterVertically),
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                            .alpha(if (enabled) 1f else 0.78f),
                         text = item.name,
                         style = Material3Theme.typography.labelMedium,
                         overflow = TextOverflow.Ellipsis,
                         maxLines = 2,
-                        color = Color(0xFFe5e3d6)
+                        color = Material3Theme.colorScheme.onSurface
                     )
                 }
-                Text(
-                    modifier = Modifier.align(Alignment.Center),
-                    text = item.name,
-                    style = Material3Theme.typography.labelMedium,
-                    overflow = TextOverflow.Ellipsis,
-                    maxLines = 2,
-                    color = Color(0xFFe5e3d6)
-                )
             }
-
         }
-
     }
 }
 

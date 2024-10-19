@@ -3,11 +3,8 @@ package dev.psiae.mltoolbox.composeui
 import androidx.compose.material.ripple.LocalRippleTheme
 import androidx.compose.material.ripple.RippleAlpha
 import androidx.compose.material.ripple.RippleTheme
-import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.awt.ComposePanel
 import androidx.compose.ui.graphics.Color
@@ -22,16 +19,24 @@ import dev.psiae.mltoolbox.app.MLToolBoxApp
 import dev.psiae.mltoolbox.composeui.core.ComposeUIContextImpl
 import dev.psiae.mltoolbox.composeui.core.UIDispatchContextImpl
 import dev.psiae.mltoolbox.composeui.core.locals.LocalComposeUIContext
+import dev.psiae.mltoolbox.composeui.main.MainScreen
+import dev.psiae.mltoolbox.composeui.theme.md3.LocalIsDarkTheme
+import dev.psiae.mltoolbox.composeui.theme.md3.colorScheme
 import dev.psiae.mltoolbox.ui.MainUIDispatcher
 import dev.psiae.mltoolbox.ui.UIFoundation
-import dev.psiae.mltoolbox.composeui.main.MainScreen
-import dev.psiae.mltoolbox.composeui.theme.md3.darkColorScheme
 import dev.psiae.mltoolbox.uifoundation.themes.md3.MD3Theme
 import java.awt.Frame
 import java.awt.event.ComponentEvent
 import java.awt.event.ComponentListener
 import javax.swing.UIManager
 
+// temporary
+private var _GLOBAL_THEME_IS_DARK by mutableStateOf(true)
+
+
+var GLOBAL_THEME_IS_DARK
+    get() = _GLOBAL_THEME_IS_DARK
+    set(value) { _GLOBAL_THEME_IS_DARK = value }
 
 class WindowsMainAwtWindow(
     internal val applicationScope: ApplicationScope
@@ -47,6 +52,7 @@ class WindowsMainAwtWindow(
     private var windowHandle: Long? = null
 
     init {
+
         System.setProperty("compose.swing.render.on.graphics", "true")
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
@@ -71,11 +77,14 @@ class WindowsMainAwtWindow(
                     ProvideWinCoreUICompositionLocals(
                         awtWindowWrapper = this@WindowsMainAwtWindow,
                     ) {
-                        LocalContentColor
-                        MaterialTheme(
-                            colorScheme = MD3Theme.darkColorScheme
+                        CompositionLocalProvider(
+                            LocalIsDarkTheme provides GLOBAL_THEME_IS_DARK
                         ) {
-                            MainScreen()
+                            MaterialTheme(
+                                colorScheme = MD3Theme.colorScheme
+                            ) {
+                                MainScreen()
+                            }
                         }
                     }
                 }
@@ -136,13 +145,15 @@ class WindowsMainAwtWindow(
         titleBarBehavior.init(hWnd())
     }
 
-    private fun prepareWindowHandle(): Long {
-        val ptr = windowHandle
-            ?: Pointer.nativeValue(Native.getWindowPointer(this)).also { windowHandle = it }
-        return ptr
-    }
+    private fun lazyWindowHandle(): Long =
+        windowHandle
+            ?: Pointer
+                .nativeValue(Native.getWindowPointer(this))
+                .also { windowHandle = it }
 
-    private fun hWnd(): WinDef.HWND = WinDef.HWND().apply { pointer = Pointer(prepareWindowHandle()) }
+    private fun hWnd(): WinDef.HWND =
+        WinDef.HWND()
+            .apply { pointer = Pointer(lazyWindowHandle()) }
 }
 
 
@@ -168,14 +179,14 @@ private fun ProvideBasePlatformCoreUICompositionLocals(
             remember { object : RippleTheme {
                 @Composable
                 override fun defaultColor(): Color = RippleTheme.defaultRippleColor(
-                    contentColor = remember { Color(250, 250,250) },
-                    lightTheme = false
+                    contentColor = Color.Black,
+                    lightTheme = true
                 )
 
                 @Composable
                 override fun rippleAlpha(): RippleAlpha = RippleTheme.defaultRippleAlpha(
-                    contentColor = remember { Color(250, 250,250) },
-                    lightTheme = false
+                    contentColor = Color.Black,
+                    lightTheme = true
                 )
             } }
         },

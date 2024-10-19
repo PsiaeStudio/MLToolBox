@@ -7,6 +7,12 @@ import androidx.compose.ui.window.AwtWindow
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import dev.psiae.mltoolbox.app.MLToolBoxApp
+import dev.psiae.mltoolbox.ui.MainImmediateUIDispatcher
+import dev.psiae.mltoolbox.ui.UIFoundation
+import dev.psiae.mltoolbox.ui.provideMainThread
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import java.awt.Dimension
 import java.awt.EventQueue
 import java.awt.Toolkit
@@ -23,6 +29,7 @@ fun MainGUI(
     app: MLToolBoxApp
 ) {
     prepareAWTThread()
+    prepareUIFoundation()
 
     application {
         // we should already be in Swing EQ
@@ -147,5 +154,15 @@ private fun prepareAWTThread() {
         }
     } catch (t: Throwable) {
         handler.uncaughtException(Thread.currentThread(), IllegalStateException("Unable to Install UncaughtExceptionHandler on AWT EDT Thread", t))
+    }
+}
+
+private fun prepareUIFoundation() {
+    runBlocking {
+        with(UIFoundation) {
+            withContext(MainImmediateUIDispatcher) {
+                provideMainThread()
+            }
+        }
     }
 }

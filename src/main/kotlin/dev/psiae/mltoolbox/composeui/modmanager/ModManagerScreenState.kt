@@ -191,11 +191,9 @@ class ModManagerScreenState(
     }
 
     private suspend fun doCheckUE4SSInstalled() {
-
         checkingUE4SSInstallation = true
         checkingUE4SSInstallationStatusMessage = "Checking UE4SS Installation ..."
 
-        isUE4SSNotInstalled = false
         ue4ssNotInstalledMessage = null
         val workingDir = gameBinaryFile?.parentFile
             ?: error("[ModManagerScreenState]: missing workingDir")
@@ -240,6 +238,7 @@ class ModManagerScreenState(
                 }
                 return@withContext
             }
+            isUE4SSNotInstalled = false
         }
         checkingUE4SSInstallation = false
         checkingUE4SSInstallationStatusMessage = null

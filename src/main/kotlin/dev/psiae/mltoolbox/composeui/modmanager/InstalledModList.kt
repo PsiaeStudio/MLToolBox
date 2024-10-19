@@ -66,9 +66,9 @@ fun InstalledModListSection(
                 SlotTabItem(
                     Modifier,
                     index = 0,
-                    lastIndex = 1,
-                    isSelected = selectedTab == "installed_mods",
-                    displayName = "Installed Mods (${state.installedModList.size})",
+                    lastIndex = 2,
+                    isSelected = selectedTab == "ue4ss_mods",
+                    displayName = "UE4SS Mods (${state.installedModList.size})",
                     enabled = true,
                     onClick = {
                         selectedTab = "installed_mods"
@@ -78,8 +78,8 @@ fun InstalledModListSection(
                     Modifier,
                     index = 1,
                     lastIndex = 2,
-                    isSelected = selectedTab == "wip1",
-                    displayName = "WIP",
+                    isSelected = selectedTab == "pak_mods",
+                    displayName = "Pak Mods",
                     enabled = false,
                     onClick = {
                         selectedTab = "wip1"
@@ -111,7 +111,7 @@ fun InstalledModListSection(
                     HeightSpacer(8.dp)
                     Text(
                         text = "*note: enable/disable mod not yet implemented",
-                        color = Color(0xFFe5e5c0),
+                        color = Material3Theme.colorScheme.onSecondaryContainer,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         style = Material3Theme.typography.labelSmall
@@ -157,7 +157,9 @@ private fun InstalledModListLazyColumn(installedModListState: InstalledModListSt
                     }
                     Checkbox(
                         checked = modData.enabled,
-                        onCheckedChange = {},
+                        onCheckedChange = { checked ->
+
+                        },
                         colors = CheckboxDefaults.colors(),
                         enabled = false
                     )

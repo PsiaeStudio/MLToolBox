@@ -1,8 +1,11 @@
 package dev.psiae.mltoolbox.composeui.theme.md3
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
+import dev.psiae.mltoolbox.composeui.GLOBAL_THEME_IS_DARK
 import dev.psiae.mltoolbox.uifoundation.themes.md3.MD3Theme
 
 private val lightScheme = lightColorScheme(
@@ -247,3 +250,11 @@ val unspecified_scheme = ColorFamily(
 
 val MD3Theme.darkColorScheme
     get() = darkScheme
+
+val MD3Theme.lightColorScheme
+    get() = lightScheme
+
+val LocalIsDarkTheme = staticCompositionLocalOf<Boolean> { GLOBAL_THEME_IS_DARK }
+
+val MD3Theme.colorScheme
+    @Composable get() = if (LocalIsDarkTheme.current) darkColorScheme else lightColorScheme

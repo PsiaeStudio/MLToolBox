@@ -13,6 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalDensity
@@ -30,6 +31,7 @@ import dev.psiae.mltoolbox.composeui.HeightSpacer
 import dev.psiae.mltoolbox.composeui.LocalAwtWindow
 import dev.psiae.mltoolbox.composeui.WidthSpacer
 import dev.psiae.mltoolbox.composeui.gestures.defaultSurfaceGestureModifiers
+import dev.psiae.mltoolbox.composeui.theme.md3.LocalIsDarkTheme
 import dev.psiae.mltoolbox.composeui.theme.md3.Material3Theme
 import dev.psiae.mltoolbox.composeui.theme.md3.surfaceColorAtElevation
 import dev.psiae.mltoolbox.java.jFile
@@ -47,7 +49,7 @@ fun InstallUE4SS(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Material3Theme.colorScheme.surface)
+            .background(Material3Theme.colorScheme.surfaceDim)
             .defaultSurfaceGestureModifiers()
     ) {
         val snackbar = remember { SnackbarHostState() }
@@ -65,7 +67,7 @@ fun InstallUE4SS(
                         .fillMaxWidth()
                         .background(
                             color = MD3Theme.surfaceColorAtElevation(
-                                surface = Material3Theme.colorScheme.surface,
+                                surface = Material3Theme.colorScheme.surfaceDim,
                                 elevation = if (topBarScrolling) 2.dp else 0.dp,
                                 tint = Material3Theme.colorScheme.primary
                             )
@@ -86,7 +88,7 @@ fun InstallUE4SS(
                                 Icon(
                                     modifier = Modifier.size(20.dp),
                                     painter = painterResource("drawable/arrow_left_simple_32px.png"),
-                                    tint = Color(0xFFc9cb786),
+                                    tint = Material3Theme.colorScheme.onSurface,
                                     contentDescription = null
                                 )
                             }
@@ -98,7 +100,7 @@ fun InstallUE4SS(
                             Text(
                                 "UE4SS Installation",
                                 style = Material3Theme.typography.titleMedium,
-                                color = Color(0xFFe4e3d6),
+                                color = Material3Theme.colorScheme.onSurface,
                                 fontWeight = FontWeight.SemiBold
                             )
                         }
@@ -115,7 +117,7 @@ fun InstallUE4SS(
                         val str = buildAnnotatedString {
                             append("1. Download RE-UE4SS: ")
                             pushStringAnnotation(tag = "ue4ss", annotation = "https://www.nexusmods.com/manorlords/mods/229?tab=files")
-                            withStyle(SpanStyle(color = Color(0xFFADD8E6), textDecoration = TextDecoration.Underline)) {
+                            withStyle(SpanStyle(Material3Theme.colorScheme.primary, textDecoration = TextDecoration.Underline)) {
                                 append("https://www.nexusmods.com/manorlords/mods/229?tab=files")
                             }
                             pop()
@@ -131,7 +133,7 @@ fun InstallUE4SS(
                         val uriHandler = LocalUriHandler.current
                         ClickableText(
                             text = str,
-                            style = Material3Theme.typography.bodyLarge.copy(color = Color.White),
+                            style = Material3Theme.typography.bodyLarge.copy(color = Material3Theme.colorScheme.onSurface),
                             onClick = { offset ->
                                 str.getStringAnnotations(tag = "ue4ss", start = offset, end = offset).let { link ->
                                     if (link.isNotEmpty())
@@ -200,6 +202,12 @@ private fun SelectUE4SSArchiveUICard(
             ElevatedCard(
                 modifier = Modifier
                     .align(Alignment.Center)
+                    .then(
+                        if (LocalIsDarkTheme.current)
+                            Modifier.shadow(elevation = 2.dp, RoundedCornerShape(12.dp))
+                        else
+                            Modifier
+                    )
                     /*.verticalScroll(rememberScrollState())*/,
                 colors = CardDefaults.cardColors(containerColor = Material3Theme.colorScheme.surfaceContainerHigh, contentColor = Material3Theme.colorScheme.onSurface)
             ) {

@@ -25,6 +25,7 @@ import dev.psiae.mltoolbox.composeui.HeightSpacer
 import dev.psiae.mltoolbox.composeui.LocalAwtWindow
 import dev.psiae.mltoolbox.composeui.WidthSpacer
 import dev.psiae.mltoolbox.composeui.gestures.defaultSurfaceGestureModifiers
+import dev.psiae.mltoolbox.composeui.theme.md3.LocalIsDarkTheme
 import dev.psiae.mltoolbox.composeui.theme.md3.Material3Theme
 import dev.psiae.mltoolbox.java.jFile
 import dev.psiae.mltoolbox.platform.content.filepicker.JnaFileChooserWindowHost
@@ -62,7 +63,7 @@ fun SelectGameWorkingDirectoryScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Material3Theme.colorScheme.surface)
+            .background(Material3Theme.colorScheme.surfaceDim)
             .defaultSurfaceGestureModifiers()
     ) {
         val scrollState = rememberScrollState()
@@ -80,8 +81,15 @@ fun SelectGameWorkingDirectoryScreen(
                     modifier = Modifier
                         .padding(horizontal = 48.dp)
                         .sizeIn(maxWidth = 1400.dp, maxHeight = 1400.dp)
-                        .align(Alignment.CenterHorizontally),
-                    colors = CardDefaults.cardColors(Material3Theme.colorScheme.surfaceContainerHigh, contentColor = Material3Theme.colorScheme.onSurface)
+                        .align(Alignment.CenterHorizontally)
+                        .then(
+                            if (LocalIsDarkTheme.current)
+                                Modifier.shadow(elevation = 2.dp, RoundedCornerShape(12.dp))
+                            else
+                                Modifier
+                        ),
+                    colors = CardDefaults
+                        .cardColors(Material3Theme.colorScheme.surfaceContainerHigh, contentColor = Material3Theme.colorScheme.onSurface)
                 ) {
                     Column(
                         Modifier.padding(24.dp)
@@ -172,7 +180,7 @@ fun SelectGameWorkingDirectoryScreen(
                         Text(
                             modifier = Modifier.padding(top = 20.dp, bottom = 4.dp),
                             text = "*note: currently this program does not check whether the selected file is actually ManorLords",
-                            color = Color(0xFFe5e5c0),
+                            color = Material3Theme.colorScheme.onSecondaryContainer,
                             style = Material3Theme.typography.labelSmall
                         )
 
@@ -182,9 +190,14 @@ fun SelectGameWorkingDirectoryScreen(
                             .defaultMinSize(minWidth = 500.dp)
                             .defaultMinSize(minHeight = 42.dp)
                             .clip(RoundedCornerShape(4.dp))
-                            .shadow(elevation = 2.dp, RoundedCornerShape(4.dp))
+                            .then(
+                                if (LocalIsDarkTheme.current)
+                                    Modifier.shadow(elevation = 2.dp, RoundedCornerShape(4.dp))
+                                else
+                                    Modifier.border(width = 1.dp, Material3Theme.colorScheme.outlineVariant, RoundedCornerShape(4.dp))
+                            )
                             .clickable(enabled = state.allowUserFileInput()) { state.userInputOpenDirPicker() }
-                            .background(remember { Color(0xFF313128) })
+                            .background(Material3Theme.colorScheme.inverseOnSurface)
                             .padding(MD3Spec.padding.incrementsDp(2).dp)
                         ) {
                             Row(
@@ -224,7 +237,7 @@ fun SelectGameWorkingDirectoryScreen(
                                     modifier = Modifier.size(18.dp).align(Alignment.CenterVertically),
                                     painter = painterResource("drawable/icon_folder_96px.png"),
                                     contentDescription = null,
-                                    tint = remember { Color(0xFFc9cb78) }
+                                    tint = Material3Theme.colorScheme.secondary
                                 )
                             }
                         }
@@ -236,7 +249,7 @@ fun SelectGameWorkingDirectoryScreen(
                                 .clip(RoundedCornerShape(4.dp))
                                 .shadow(elevation = 2.dp, RoundedCornerShape(4.dp))
                                 .clickable(enabled = state.allowUserFileInput()) { state.userInputFindFromRunningGameInstance() }
-                                .background(remember { Color(0xFFc9c8a5) })
+                                .background(Material3Theme.colorScheme.secondary)
                                 .padding(horizontal = MD3Spec.padding.incrementsDp(2).dp, vertical = MD3Spec.padding.incrementsDp(1).dp)
                             ) {
                                 Row(
@@ -251,7 +264,7 @@ fun SelectGameWorkingDirectoryScreen(
                                             Row {
                                                 CircularProgressIndicator(
                                                     modifier = Modifier.size(16.dp),
-                                                    color = Color(0xFF2f321a),
+                                                    color = Material3Theme.colorScheme.onSecondary,
                                                     strokeWidth = 1.dp
                                                 )
                                                 WidthSpacer(8.dp)
@@ -261,7 +274,7 @@ fun SelectGameWorkingDirectoryScreen(
                                                         .align(Alignment.CenterVertically),
                                                     text = "Searching for process ...",
                                                     style = Material3Theme.typography.labelMedium,
-                                                    color = Color(0xFF313219),
+                                                    color = Material3Theme.colorScheme.onSecondary,
                                                     maxLines = 1,
                                                     overflow = TextOverflow.Ellipsis,
                                                     fontWeight = FontWeight.SemiBold,
@@ -274,7 +287,7 @@ fun SelectGameWorkingDirectoryScreen(
                                                     .align(Alignment.CenterVertically),
                                                 text = "Detect from running instance",
                                                 style = Material3Theme.typography.labelMedium,
-                                                color = Color(0xFF313219),
+                                                color = Material3Theme.colorScheme.onSecondary,
                                                 maxLines = 1,
                                                 overflow = TextOverflow.Ellipsis,
                                                 fontWeight = FontWeight.SemiBold,
@@ -299,7 +312,7 @@ fun SelectGameWorkingDirectoryScreen(
                                         .align(Alignment.CenterVertically),
                                     painter = painterResource("drawable/icon_info_filled_32px.png"),
                                     contentDescription = null,
-                                    tint = remember { Color(0xFFc9c8a5) }
+                                    tint = Material3Theme.colorScheme.secondary
                                 )
                             }
                         }
@@ -308,7 +321,7 @@ fun SelectGameWorkingDirectoryScreen(
                             Text(
                                 modifier = Modifier.align(Alignment.CenterHorizontally).weight(1f, false),
                                 text = "ManorLords process not found",
-                                color = Color(0xFFffb4ab),
+                                color = Material3Theme.colorScheme.error,
                                 style = Material3Theme.typography.bodyMedium,
                                 fontWeight = FontWeight.SemiBold
                             )
@@ -506,13 +519,13 @@ fun SimpleTooltip(
             Box(
                 modifier = Modifier
                     .defaultMinSize(minHeight = 24.dp)
-                    .background(Color(230, 224, 233))
+                    .background(Material3Theme.colorScheme.inverseSurface)
                     .padding(horizontal = 8.dp)
             ) {
                 Text(
                     modifier = Modifier.align(Alignment.Center),
                     text = text,
-                    color = Color(round(50 / 1.5f).toInt(), round(47 / 1.5f).toInt(), round(53 / 1.5f).toInt()),
+                    color = Material3Theme.colorScheme.inverseOnSurface,
                     style = Material3Theme.typography.labelMedium,
                     maxLines = maxLines
                 )

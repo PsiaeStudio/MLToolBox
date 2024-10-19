@@ -12,6 +12,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalDensity
@@ -27,6 +28,7 @@ import dev.psiae.mltoolbox.composeui.HeightSpacer
 import dev.psiae.mltoolbox.composeui.LocalAwtWindow
 import dev.psiae.mltoolbox.composeui.WidthSpacer
 import dev.psiae.mltoolbox.composeui.gestures.defaultSurfaceGestureModifiers
+import dev.psiae.mltoolbox.composeui.theme.md3.LocalIsDarkTheme
 import dev.psiae.mltoolbox.composeui.theme.md3.Material3Theme
 import dev.psiae.mltoolbox.composeui.theme.md3.surfaceColorAtElevation
 import dev.psiae.mltoolbox.java.jFile
@@ -43,7 +45,7 @@ fun InstallUE4SSMods(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Material3Theme.colorScheme.surface)
+            .background(Material3Theme.colorScheme.surfaceDim)
             .defaultSurfaceGestureModifiers()
     ) {
         val snackbar = remember { SnackbarHostState() }
@@ -62,7 +64,7 @@ fun InstallUE4SSMods(
                         .fillMaxWidth()
                         .background(
                             color = MD3Theme.surfaceColorAtElevation(
-                                surface = Material3Theme.colorScheme.surface,
+                                surface = Material3Theme.colorScheme.surfaceDim,
                                 elevation = if (topBarScrolling) 2.dp else 0.dp,
                                 tint = Material3Theme.colorScheme.primary
                             )
@@ -83,7 +85,7 @@ fun InstallUE4SSMods(
                                 Icon(
                                     modifier = Modifier.size(20.dp),
                                     painter = painterResource("drawable/arrow_left_simple_32px.png"),
-                                    tint = Color(0xFFc9cb786),
+                                    tint = Material3Theme.colorScheme.onSurface,
                                     contentDescription = null
                                 )
                             }
@@ -95,7 +97,7 @@ fun InstallUE4SSMods(
                             Text(
                                 "UE4SS Mods Installation",
                                 style = Material3Theme.typography.titleMedium,
-                                color = Color(0xFFe4e3d6),
+                                color = Material3Theme.colorScheme.onSurface,
                                 fontWeight = FontWeight.SemiBold
                             )
                         }
@@ -120,7 +122,7 @@ fun InstallUE4SSMods(
                                         append("*note: previous installation will be deleted")
                                     }
                                 },
-                                style = Material3Theme.typography.bodyLarge.copy(color = Color.White)
+                                style = Material3Theme.typography.bodyLarge.copy(color = Material3Theme.colorScheme.onSurface)
                             )
                         }
                         HeightSpacer(32.dp)
@@ -179,6 +181,12 @@ private fun SelectModArchiveCard(
             ElevatedCard(
                 modifier = Modifier
                     .align(Alignment.Center)
+                    .then(
+                        if (LocalIsDarkTheme.current)
+                            Modifier.shadow(elevation = 2.dp, RoundedCornerShape(12.dp))
+                        else
+                            Modifier
+                    )
                 /*.verticalScroll(rememberScrollState())*/,
                 colors = CardDefaults.cardColors(containerColor = Material3Theme.colorScheme.surfaceContainerHigh, contentColor = Material3Theme.colorScheme.onSurface)
             ) {

@@ -1,5 +1,6 @@
 package dev.psiae.mltoolbox.composeui.modmanager
 
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
@@ -10,12 +11,13 @@ import dev.psiae.mltoolbox.composeui.MainDrawerDestination
 fun modManagerMainScreenDrawerItem(): MainDrawerDestination {
     val content = @Composable { ModManagerMainScreen() }
     val painter = painterResource("drawable/icon_ios_glyph_gears_100px.png")
-    return remember(painter) {
+    val iconTint = MaterialTheme.colorScheme.onSecondaryContainer
+    return remember(painter, iconTint) {
         MainDrawerDestination(
             id = "MODS",
             icon = painter,
-            iconTint = Color(0xFFc9cb78),
-            name = "MOD MANAGER",
+            iconTint = iconTint,
+            name = "Mod Manager",
             content = content
         )
     }
