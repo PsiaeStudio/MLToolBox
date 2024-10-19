@@ -111,17 +111,12 @@ fun ModManagerMainScreen() {
                 Box(
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .then(if (modManagerScreen.checkingUE4SSInstallation) Modifier.alpha(0.1f) else Modifier)
-                    ) {
-                        if (modManagerScreen.isUE4SSNotInstalled) {
-                            UE4SSNotInstalledUI(modManagerScreen)
-                        } else {
-                            DashBoardUI(modManagerScreen)
-                        }
+                    if (modManagerScreen.isUE4SSNotInstalled) {
+                        UE4SSNotInstalledUI(modManagerScreen)
+                    } else {
+                        DashBoardUI(modManagerScreen)
                     }
-                    if (modManagerScreen.checkingUE4SSInstallation) {
+                    /*if (modManagerScreen.checkingUE4SSInstallation) {
                         val scroll = rememberScrollState()
                         val viewPortDp = with(LocalDensity.current) {
                             scroll.viewportSize.toDp()
@@ -147,7 +142,7 @@ fun ModManagerMainScreen() {
                             )
                             HeightSpacer(24.dp)
                         }
-                    }
+                    }*/
                 }
             }
             if (modManagerScreen.installUE4SS) {

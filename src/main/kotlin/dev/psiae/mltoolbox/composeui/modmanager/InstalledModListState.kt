@@ -78,9 +78,9 @@ class InstalledModListState(
         withContext(Dispatchers.IO) {
             val modsFolder = jFile("${gameFile.parent}\\ue4ss\\Mods\\")
             if (!modsFolder.exists()) {
-                TODO()
+                return@withContext
             } else if (!modsFolder.isDirectory) {
-                TODO()
+                return@withContext
             }
             val mods = modsFolder.listFiles()
                 ?.filter {

@@ -181,15 +181,17 @@ class ModManagerScreenState(
             }
             // TODO: redo changingWorkDir
             snapshotFlow { changingWorkDir }.first { !it }
-            inputCheckUE4SSInstalled().also {
-                try { ue4ssInstallationCheckWorker!!.cancelAndJoin() } catch (_: CancellationException) {}
+            ue4ssInstallationCheckWorker?.apply {
+                try { cancelAndJoin() } catch (_: CancellationException) {}
             }
+            inputCheckUE4SSInstalled()
             installedModListState?.refreshSuspend()
             checkingUE4SSInstallation = false
         }
     }
 
     private suspend fun doCheckUE4SSInstalled() {
+
         checkingUE4SSInstallation = true
         checkingUE4SSInstallationStatusMessage = "Checking UE4SS Installation ..."
 
@@ -239,7 +241,7 @@ class ModManagerScreenState(
                 return@withContext
             }
         }
-        /*checkingUE4SSInstallation = false*/
+        checkingUE4SSInstallation = false
         checkingUE4SSInstallationStatusMessage = null
     }
 }
