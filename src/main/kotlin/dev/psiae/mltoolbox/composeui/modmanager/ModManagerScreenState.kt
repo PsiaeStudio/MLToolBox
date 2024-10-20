@@ -4,6 +4,7 @@ import androidx.compose.runtime.*
 import dev.psiae.mltoolbox.composeui.core.ComposeUIContext
 import dev.psiae.mltoolbox.composeui.core.locals.LocalComposeUIContext
 import dev.psiae.mltoolbox.java.jFile
+import dev.psiae.mltoolbox.modmanager.launcher.ManorLordsVanillaLauncher
 import dev.psiae.mltoolbox.utilskt.isNullOrNotActive
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.first
@@ -150,6 +151,13 @@ class ModManagerScreenState(
             }
             launchingGame = false
         }
+    }
+
+    fun launchGameVanilla() {
+        ManorLordsVanillaLauncher(coroutineScope, gameBinaryFile!!)
+            .apply {
+                launch()
+            }
     }
 
     fun userInputRetryCheckUE4SSInstalled() {

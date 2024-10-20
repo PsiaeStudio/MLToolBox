@@ -56,7 +56,7 @@ fun InstalledModListSection(
                 }
         ) {
             var selectedTab by remember {
-                mutableStateOf<String>("installed_mods")
+                mutableStateOf<String>("ue4ss_mods")
             }
             Row(
                 modifier = Modifier
@@ -100,9 +100,9 @@ fun InstalledModListSection(
             HeightSpacer(12.dp)
             Divider(
                 modifier = Modifier.width(width),
-                color = Material3Theme.colorScheme.surfaceVariant
+                color = Material3Theme.colorScheme.outlineVariant
             )
-            if (selectedTab == "installed_mods") {
+            if (selectedTab == "ue4ss_mods") {
                 Column(
                     modifier = Modifier
                         .padding(horizontal = 16.dp)

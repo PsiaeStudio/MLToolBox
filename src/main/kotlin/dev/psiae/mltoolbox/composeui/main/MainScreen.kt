@@ -74,6 +74,7 @@ fun MainScreen(
                         1.dp
                     )
                 },
+                animationSpec = tween(300)
             ).value,
         )
         MainScreenLayoutContent(
@@ -322,7 +323,7 @@ fun MainScreenLayoutBody() {
                     Box(
                         modifier = Modifier
                             .align(Alignment.CenterHorizontally)
-                            .border(1.dp, Material3Theme.colorScheme.onSurface, RoundedCornerShape(50))
+                            .border(1.dp, Material3Theme.colorScheme.outline, RoundedCornerShape(50))
                             .clip(RoundedCornerShape(50))
                             .clickable { GLOBAL_THEME_IS_DARK = !GLOBAL_THEME_IS_DARK }
                             .padding(12.dp)
@@ -336,7 +337,7 @@ fun MainScreenLayoutBody() {
                             else
                                 painterResource("drawable/icon_light_theme_sun_outline_24px.png"),
                             contentDescription = null,
-                            tint = Material3Theme.colorScheme.onSurface,
+                            tint = Material3Theme.colorScheme.primary,
                         )
                     }
                 }

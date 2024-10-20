@@ -29,6 +29,7 @@ import dev.psiae.mltoolbox.composeui.WidthSpacer
 import dev.psiae.mltoolbox.composeui.gestures.defaultSurfaceGestureModifiers
 import dev.psiae.mltoolbox.composeui.theme.md3.LocalIsDarkTheme
 import dev.psiae.mltoolbox.composeui.theme.md3.Material3Theme
+import dev.psiae.mltoolbox.modmanager.launcher.ManorLordsVanillaLauncher
 import dev.psiae.mltoolbox.uifoundation.themes.md3.MD3Spec
 import dev.psiae.mltoolbox.uifoundation.themes.md3.incrementsDp
 import dev.psiae.mltoolbox.uifoundation.themes.md3.padding
@@ -298,6 +299,54 @@ private fun CommonsSectionContent(
                         color = Material3Theme.colorScheme.outline,
                         shape = RoundedCornerShape(50)
                     )
+                    .clickable(enabled = enabled) {
+                        modManagerScreen.launchGameVanilla()
+                    }
+                    .padding(vertical = 6.dp, horizontal = 12.dp)
+            ) {
+                Row(
+                    Modifier.align(Alignment.Center),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    if (modManagerScreen.launchingGame) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            color = Color(0xFFc9cb78),
+                            strokeWidth = 1.dp
+                        )
+                    } else {
+                        Icon(
+                            modifier = Modifier.size(24.dp).clip(RoundedCornerShape(50)),
+                            painter = painterResource("drawable/1.ico"),
+                            contentDescription = null,
+                            tint = Color.Unspecified
+                        )
+                    }
+                    WidthSpacer(10.dp)
+                    Text(
+                        modifier = Modifier.alpha(if (enabled) 1f else 0.68f),
+                        text = "Launch VANILLA",
+                        style = Material3Theme.typography.labelLarge,
+                        color = Material3Theme.colorScheme.primary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
+        }
+        run {
+            WidthSpacer(16.dp)
+            val enabled = !modManagerScreen.launchingGame
+            Box(
+                modifier = Modifier
+                    .alpha(if (enabled) 1f else 0.38f)
+                    .padding(top = 6.dp)
+                    .clip(RoundedCornerShape(50))
+                    .border(
+                        width = 1.dp,
+                        color = Material3Theme.colorScheme.outline,
+                        shape = RoundedCornerShape(50)
+                    )
                     .clickable(enabled = enabled) { modManagerScreen.launchGame() }
                     .padding(vertical = 6.dp, horizontal = 12.dp)
             ) {
@@ -322,7 +371,7 @@ private fun CommonsSectionContent(
                     WidthSpacer(10.dp)
                     Text(
                         modifier = Modifier.alpha(if (enabled) 1f else 0.68f),
-                        text = "Launch Manor Lords",
+                        text = "Launch MODDED",
                         style = Material3Theme.typography.labelLarge,
                         color = Material3Theme.colorScheme.primary,
                         maxLines = 1,

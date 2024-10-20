@@ -17,6 +17,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalUriHandler
@@ -31,6 +32,7 @@ import dev.psiae.mltoolbox.composeui.HeightSpacer
 import dev.psiae.mltoolbox.composeui.LocalAwtWindow
 import dev.psiae.mltoolbox.composeui.gestures.defaultSurfaceGestureModifiers
 import dev.psiae.mltoolbox.composeui.modmanager.SimpleTooltip
+import dev.psiae.mltoolbox.composeui.theme.md3.LocalIsDarkTheme
 import dev.psiae.mltoolbox.composeui.theme.md3.Material3Theme
 import kotlinx.coroutines.launch
 import java.net.URI
@@ -41,7 +43,7 @@ fun DonateMainScreen() {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(remember { Color(0XFF14140c) })
+            .background(Material3Theme.colorScheme.surfaceDim)
             .defaultSurfaceGestureModifiers()
     ) {
         CompositionLocalProvider(
@@ -66,8 +68,14 @@ private fun PatreonCardUI(
         ElevatedCard(
             modifier = Modifier
                 .clickable { uriHandler.openUri("https://www.patreon.com/c/psiae/membership") }
+                .then(
+                    if (LocalIsDarkTheme.current)
+                        Modifier.shadow(elevation = 2.dp, RoundedCornerShape(12.dp))
+                    else
+                        Modifier
+                )
             /*.verticalScroll(rememberScrollState())*/,
-            colors = CardDefaults.cardColors(containerColor = Color(0xFF46492f), contentColor = Color(0xFF2c0b12)),
+            colors = CardDefaults.cardColors(containerColor = Material3Theme.colorScheme.surfaceContainerHigh, contentColor = Material3Theme.colorScheme.onSurface),
         ) {
             Column(
                 modifier = Modifier.padding(36.dp),
@@ -90,7 +98,7 @@ private fun PatreonCardUI(
                 Text(
                     modifier = Modifier,
                     text = "Patreon",
-                    color = Color(0xFFe5e5c0),
+                    color = Material3Theme.colorScheme.onSurface,
                     style = Material3Theme.typography.titleMedium
                 )
             }
