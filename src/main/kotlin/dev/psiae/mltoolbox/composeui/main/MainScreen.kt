@@ -74,7 +74,7 @@ fun MainScreen(
                         1.dp
                     )
                 },
-                animationSpec = tween(300)
+                animationSpec = tween(200)
             ).value,
         )
         MainScreenLayoutContent(

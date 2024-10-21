@@ -77,6 +77,9 @@ class ModManagerScreenState(
 
     var installedModListState by mutableStateOf<InstalledModListState?>(null)
 
+    var currentDrawerDestination by mutableStateOf("dashboard")
+
+
     fun stateEnter() {
         _coroutineScope = CoroutineScope(uiContext.dispatchContext.mainDispatcher)
 
