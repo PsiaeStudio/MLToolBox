@@ -2,11 +2,13 @@ package dev.psiae.mltoolbox.composeui
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.Stable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 
 @Immutable
-class MainDrawerDestination(
+@Stable
+data class MainDrawerDestination(
     val id: String,
     val icon: Painter,
     val name: String,

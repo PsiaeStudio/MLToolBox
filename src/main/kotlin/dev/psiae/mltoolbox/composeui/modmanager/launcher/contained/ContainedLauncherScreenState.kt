@@ -41,7 +41,7 @@ class ContainedLauncherScreenState(
     var selectedTab by mutableStateOf("shared")
 
     fun stateEnter() {
-        _coroutineScope = CoroutineScope(uiContext.dispatchContext.mainDispatcher)
+        _coroutineScope = CoroutineScope(uiContext.dispatchContext.mainDispatcher.immediate)
         init()
     }
 

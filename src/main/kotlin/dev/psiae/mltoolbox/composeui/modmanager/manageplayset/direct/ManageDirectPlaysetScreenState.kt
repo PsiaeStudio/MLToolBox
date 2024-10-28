@@ -1,20 +1,20 @@
-package dev.psiae.mltoolbox.composeui.modmanager.launcher
+package dev.psiae.mltoolbox.composeui.modmanager.manageplayset.direct
 
 import androidx.compose.runtime.*
 import dev.psiae.mltoolbox.composeui.core.ComposeUIContext
 import dev.psiae.mltoolbox.composeui.core.locals.LocalComposeUIContext
-import dev.psiae.mltoolbox.composeui.modmanager.ModManagerScreenState
-import dev.psiae.mltoolbox.java.jFile
-import kotlinx.coroutines.*
-import java.io.Closeable
+import dev.psiae.mltoolbox.composeui.modmanager.manageplayset.ManagePlaysetScreenState
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 
 @Composable
-fun rememberLauncherScreenState(
-    modManagerScreenState: ModManagerScreenState
-): LauncherScreenState {
+fun rememberManageDirectPlaysetScreenState(
+    managePlaysetScreenState: ManagePlaysetScreenState
+): ManageDirectPlaysetScreenState {
     val uiContext = LocalComposeUIContext.current
-    val state = remember(modManagerScreenState) {
-        LauncherScreenState(modManagerScreenState, uiContext)
+    val state = remember(managePlaysetScreenState) {
+        ManageDirectPlaysetScreenState(managePlaysetScreenState, uiContext)
     }
 
     DisposableEffect(state) {
@@ -25,8 +25,8 @@ fun rememberLauncherScreenState(
     return state
 }
 
-class LauncherScreenState(
-    val modManagerScreenState: ModManagerScreenState,
+class ManageDirectPlaysetScreenState(
+    val managePlaysetScreenState: ManagePlaysetScreenState,
     val uiContext: ComposeUIContext
 ) {
 
@@ -37,8 +37,6 @@ class LauncherScreenState(
         get() = requireNotNull(_coroutineScope) {
             "_coroutineScope is null"
         }
-
-    var selectedTab by mutableStateOf("direct")
 
     fun stateEnter() {
         _coroutineScope = CoroutineScope(uiContext.dispatchContext.mainDispatcher.immediate)

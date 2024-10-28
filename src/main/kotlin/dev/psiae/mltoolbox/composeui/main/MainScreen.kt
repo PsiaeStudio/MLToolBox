@@ -11,6 +11,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Icon
 import androidx.compose.material.Text
 import androidx.compose.material.ripple.LocalRippleTheme
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.BiasAlignment
@@ -301,7 +302,7 @@ fun MainScreenLayoutBody() {
                             .weight(1f)
                             .fillMaxHeight(),
                         onDestinationClicked = { select ->
-                            if (!dest.value.contains(select)) {
+                            if (!dest.value.any { it.id == select.id }) {
                                 dest.value = StableList(
                                     ArrayList<MainDrawerDestination>()
                                         .apply { addAll(dest.value) ; add(select) }
@@ -366,25 +367,36 @@ fun MainScreenLayoutDrawerNavigationPanel(
         ) {
             HeightSpacer(16.dp)
             listOf(
-                modManagerMainScreenDrawerItem(),
-                supportProjectMainScreenDrawerItem()
+                listOf(modManagerMainScreenDrawerItem()),
+                listOf(supportProjectMainScreenDrawerItem())
             ).also {
                 LaunchedEffect(Unit) {
-                    onDestinationClicked(it.first())
+                    println("launchedEffect")
+                    onDestinationClicked(it.first().first())
                 }
             }.run {
-                fastForEachIndexed { i, item ->
-                    val isSelected = currentDestinationId == item.id
-                    DrawerNavigationPanelItem(
-                        modifier = Modifier
-                            .defaultMinSize(minWidth = 100.dp),
-                        item = item,
-                        isSelected = isSelected,
-                        enabled = true,
-                        onClick = { onDestinationClicked(item) }
-                    )
+                fastForEachIndexed { i, group ->
+                    group.fastForEachIndexed { ii, item ->
+                        val isSelected = currentDestinationId == item.id
+                        DrawerNavigationPanelItem(
+                            modifier = Modifier
+                                .defaultMinSize(minWidth = 100.dp),
+                            item = item,
+                            isSelected = isSelected,
+                            enabled = true,
+                            onClick = { onDestinationClicked(item) }
+                        )
+                        if (ii < group.lastIndex) {
+                            HeightSpacer(12.dp)
+                        }
+                    }
                     if (i < lastIndex) {
-                        HeightSpacer(12.dp)
+                        Box(
+                            modifier = Modifier
+                                .height(12.dp)
+                        ) {
+                            HorizontalDivider(modifier = Modifier.align(Alignment.Center).width(160.dp).padding(horizontal = 8.dp))
+                        }
                     }
                 }
             }
@@ -393,28 +405,7 @@ fun MainScreenLayoutDrawerNavigationPanel(
     }
 }
 
-@Composable
-fun MainScreenLayoutScreenHost(
-    destinations: StableList<MainDrawerDestination>
-) {
-    if (destinations.isEmpty()) {
-        HostNoDestinationSelected()
-    } else {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(bottom = 16.dp)
-                .background(remember { Color(29, 24, 34) })
-                .defaultSurfaceGestureModifiers()
-        ) {
-            destinations.fastForEach { dest ->
-                key(dest.id) {
-                    dest.content.invoke()
-                }
-            }
-        }
-    }
-}
+
 
 @Composable
 private fun DrawerNavigationPanelItem(
@@ -434,7 +425,10 @@ private fun DrawerNavigationPanelItem(
     )
     Column(
         modifier = modifier
-            .defaultMinSize(minHeight = 56.dp, minWidth = 80.dp)
+            .defaultMinSize(
+                minHeight = if (item.icon != NoOpPainter) 56.dp else 46.dp,
+                minWidth = 80.dp
+            )
             .alpha(if (enabled) 1f else 0.38f)
             .clickable(
                 enabled = !isSelected && enabled,
@@ -478,7 +472,7 @@ private fun DrawerNavigationPanelItem(
                         .size(24.dp)
                         .align(Alignment.Center),
                     painter = item.icon,
-                    tint = item.iconTint ?: Color.Unspecified,
+                    tint = item.iconTint ?: Material3Theme.colorScheme.onSecondaryContainer,
                     contentDescription = null
                 )
             }
@@ -496,7 +490,7 @@ private fun DrawerNavigationPanelItem(
         } else {
             Box(
                 modifier = Modifier
-                    .defaultMinSize(minWidth = 80.dp, minHeight = 56.dp)
+                    .defaultMinSize(minWidth = 80.dp, minHeight = 46.dp)
                     .clip(RoundedCornerShape(50))
                     .composed {
                         val rippleTheme = LocalRippleTheme.current
@@ -520,7 +514,7 @@ private fun DrawerNavigationPanelItem(
                                     .graphicsLayer { alpha = selectedAnimationProgress.value }
                             else Modifier
                         )
-                        .height(56.dp)
+                        .height(46.dp)
                         .width(indicationWidth * selectedAnimationProgress.value)
                 )
                 Box(
@@ -553,6 +547,6 @@ private fun DrawerNavigationPanelItem(
 }
 
 @Composable
-private fun HostNoDestinationSelected() {
+fun HostNoDestinationSelected() {
 
 }

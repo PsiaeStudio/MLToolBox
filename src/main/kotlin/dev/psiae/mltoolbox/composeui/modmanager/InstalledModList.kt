@@ -122,7 +122,6 @@ fun InstalledModListSection(
             }
         }
     }
-
 }
 
 @Composable
@@ -138,7 +137,7 @@ private fun InstalledModListLazyColumn(installedModListState: InstalledModListSt
         ) {
             val list = installedModListState.installedModList
             itemsIndexed(
-                key = { i, modData -> modData.qualifiedName },
+                key = { i, modData -> modData.uniqueQualifiedName },
                 items = list
             ) { i, modData ->
                 Row(

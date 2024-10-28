@@ -34,6 +34,7 @@ import dev.psiae.mltoolbox.composeui.gestures.defaultSurfaceGestureModifiers
 import dev.psiae.mltoolbox.composeui.modmanager.SimpleTooltip
 import dev.psiae.mltoolbox.composeui.theme.md3.LocalIsDarkTheme
 import dev.psiae.mltoolbox.composeui.theme.md3.Material3Theme
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.net.URI
 
@@ -64,10 +65,10 @@ private fun PatreonCardUI(
     modifier: Modifier
 ) {
     val uriHandler = LocalUriHandler.current
+    val coroutineScope = rememberCoroutineScope()
     BoxWithConstraints(modifier) {
         ElevatedCard(
             modifier = Modifier
-                .clickable { uriHandler.openUri("https://www.patreon.com/c/psiae/membership") }
                 .then(
                     if (LocalIsDarkTheme.current)
                         Modifier.shadow(elevation = 2.dp, RoundedCornerShape(12.dp))
@@ -78,7 +79,13 @@ private fun PatreonCardUI(
             colors = CardDefaults.cardColors(containerColor = Material3Theme.colorScheme.surfaceContainerHigh, contentColor = Material3Theme.colorScheme.onSurface),
         ) {
             Column(
-                modifier = Modifier.padding(36.dp),
+                modifier = Modifier
+                    .clickable {
+                        coroutineScope.launch(Dispatchers.IO) {
+                            uriHandler.openUri("https://www.patreon.com/c/psiae/membership")
+                        }
+                    }
+                    .padding(36.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Box(

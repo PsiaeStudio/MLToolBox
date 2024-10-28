@@ -1,10 +1,10 @@
-package dev.psiae.mltoolbox.composeui.modmanager
+package dev.psiae.mltoolbox.composeui.modmanager.managemods.direct
 
 import androidx.compose.foundation.*
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -16,9 +16,13 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.BaselineShift
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import dev.dexsr.gmod.palworld.toolbox.savegame.composeui.libint.DragData
@@ -27,8 +31,7 @@ import dev.psiae.mltoolbox.composeui.HeightSpacer
 import dev.psiae.mltoolbox.composeui.LocalAwtWindow
 import dev.psiae.mltoolbox.composeui.WidthSpacer
 import dev.psiae.mltoolbox.composeui.gestures.defaultSurfaceGestureModifiers
-import dev.psiae.mltoolbox.composeui.modmanager.managemods.direct.DirectInstallUE4SSModScreenState
-import dev.psiae.mltoolbox.composeui.modmanager.managemods.direct.DirectInstallUE4SSModScreen
+import dev.psiae.mltoolbox.composeui.modmanager.SimpleTooltip
 import dev.psiae.mltoolbox.composeui.theme.md3.LocalIsDarkTheme
 import dev.psiae.mltoolbox.composeui.theme.md3.Material3Theme
 import dev.psiae.mltoolbox.composeui.theme.md3.surfaceColorAtElevation
@@ -38,10 +41,10 @@ import kotlinx.coroutines.launch
 import java.net.URI
 
 @Composable
-fun InstallUE4SSMods(
-    modManagerScreenState: ModManagerScreenState
+fun DirectInstallUE4SSScreen(
+    directInstallModScreenState: DirectInstallModScreenState
 ) {
-    val ue4ssState = rememberInstallUE4SSModState(modManagerScreenState)
+    val ue4ssState = rememberDirectInstallUE4SSScreenState(directInstallModScreenState)
     val window = LocalAwtWindow.current
     Box(
         modifier = Modifier
@@ -56,8 +59,7 @@ fun InstallUE4SSMods(
             LocalIndication provides rememberRipple(),
         ) {
             Column(
-                modifier = Modifier
-                    .fillMaxSize()
+                modifier = Modifier.fillMaxSize()
             ) {
                 Box(
                     modifier = Modifier
@@ -80,7 +82,7 @@ fun InstallUE4SSMods(
                         ) {
                             Box(
                                 modifier = Modifier
-                                    .clickable(onClick = { modManagerScreenState.userInputInstallUE4SSModExit() })
+                                    .clickable(onClick = { directInstallModScreenState.userInputNavigateOutInstallUE4SS() })
                                     .padding(vertical = 4.dp, horizontal = 4.dp)
                             ) {
                                 Icon(
@@ -96,10 +98,11 @@ fun InstallUE4SSMods(
 
                         Row {
                             Text(
-                                "UE4SS Mods Installation",
-                                style = Material3Theme.typography.titleMedium,
+                                "Install RE-UE4SS mod loader",
+                                style = Material3Theme.typography.headlineSmall.copy(
+                                    baselineShift = BaselineShift(-0.1f)
+                                ),
                                 color = Material3Theme.colorScheme.onSurface,
-                                fontWeight = FontWeight.SemiBold
                             )
                         }
                     }
@@ -107,30 +110,56 @@ fun InstallUE4SSMods(
 
                 Row {
                     Column(
-                        Modifier
+                        modifier = Modifier
                             .weight(1f)
                             .padding(horizontal = 16.dp)
                             .verticalScroll(scrollState)
                     ) {
+                        HeightSpacer(12.dp)
+                        Text(
+                            text = "RE-UE4SS Installation",
+                            style = Material3Theme.typography.titleLarge,
+                            color = Material3Theme.colorScheme.onSurface,
+                            maxLines = 1
+                        )
+                        HeightSpacer(8.dp)
                         Column(
-                            modifier = Modifier.padding(horizontal = 16.dp)
+                            modifier = Modifier.padding(horizontal = 8.dp)
                         ) {
-                            Text(
-                                text = buildAnnotatedString {
-                                    append("1. Import the mod(s) archive below")
-                                    withStyle(Material3Theme.typography.bodyMedium.toSpanStyle()) {
-                                        append("\n\n")
-                                        append("*note: previous installation will be deleted")
+                            val str = buildAnnotatedString {
+                                append("1. Download RE-UE4SS: ")
+                                pushStringAnnotation(tag = "ue4ss", annotation = "https://www.nexusmods.com/manorlords/mods/229?tab=files")
+                                withStyle(SpanStyle(Material3Theme.colorScheme.primary, textDecoration = TextDecoration.Underline)) {
+                                    append("https://www.nexusmods.com/manorlords/mods/229?tab=files")
+                                }
+                                pop()
+
+                                append("\n")
+                                append("2. Import the downloaded (.zip) file below")
+
+                                append("\n\n")
+                                withStyle(Material3Theme.typography.bodySmall.toSpanStyle()) {
+                                    append("*note: previous installation will be deleted")
+                                }
+                            }
+                            val uriHandler = LocalUriHandler.current
+                            ClickableText(
+                                text = str,
+                                style = Material3Theme.typography.bodyLarge.copy(color = Material3Theme.colorScheme.onSurface),
+                                onClick = { offset ->
+                                    str.getStringAnnotations(tag = "ue4ss", start = offset, end = offset).let { link ->
+                                        if (link.isNotEmpty())
+                                            uriHandler.openUri(link.first().item)
                                     }
-                                },
-                                style = Material3Theme.typography.bodyLarge.copy(color = Material3Theme.colorScheme.onSurface)
+                                }
+                            )
+
+                            HeightSpacer(32.dp)
+                            SelectUE4SSArchiveUICard(Modifier, ue4ssState, snackbar)
+                            Box(
+                                modifier = Modifier.height(16.dp)
                             )
                         }
-                        HeightSpacer(32.dp)
-                        SelectModArchiveCard(Modifier, ue4ssState, snackbar)
-                        Box(
-                            modifier = Modifier.height(16.dp)
-                        )
                     }
                     VerticalScrollbar(
                         modifier = Modifier
@@ -155,15 +184,19 @@ fun InstallUE4SSMods(
                     )
                 }
             }
+            SnackbarHost(
+                modifier = Modifier.align(Alignment.BottomCenter),
+                hostState = snackbar
+            )
         }
     }
 }
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-private fun SelectModArchiveCard(
+private fun SelectUE4SSArchiveUICard(
     modifier: Modifier,
-    ue4ssState: InstallUE4SSModState,
+    ue4ssState: DirectInstallUE4SSScreenState,
     snackbar: SnackbarHostState
 ) {
     val window = LocalAwtWindow.current
@@ -216,7 +249,7 @@ private fun SelectModArchiveCard(
                             maxLines = 1
                         )
                     }
-                } else if (ue4ssState.selectedUE4SSModsArchive == null) {
+                } else if (ue4ssState.selectedUE4SSArchive == null) {
                     Column(
                         Modifier
                             .defaultMinSize(contentMinSize, contentMinSize)
@@ -226,7 +259,9 @@ private fun SelectModArchiveCard(
                                     if (
                                         start.dragData is DragData.FilesList &&
                                         start.dragData.readFiles().let { files ->
-                                            files.isNotEmpty() && files.all { it.endsWith(".zip") }
+                                            files.size == 1 && files.first().let { file ->
+                                                jFile(file).isFile && file.endsWith(".zip")
+                                            }
                                         }
                                     ) {
                                         draggingInBoundState.value = true
@@ -242,14 +277,12 @@ private fun SelectModArchiveCard(
                                 if (
                                     drop.dragData is DragData.FilesList &&
                                     drop.dragData.readFiles().let { files ->
-                                        files.size == 1 && files.first().endsWith(".zip")
+                                        files.size == 1 && files.first().let { file ->
+                                            jFile(file).isFile && file.endsWith(".zip")
+                                        }
                                     }
                                 ) {
-                                    ue4ssState.userDropUE4SSModsArchive(
-                                        drop.dragData.readFiles().map {
-                                            jFile(URI(it))
-                                        }
-                                    )
+                                    ue4ssState.userDropUE4SSArchive(jFile(URI(drop.dragData.readFiles().first())))
                                 }
                             }
                             .then(
@@ -257,9 +290,7 @@ private fun SelectModArchiveCard(
                                     Modifier.border(
                                         width = 1.dp,
                                         color = Color.Green,
-                                        shape = RoundedCornerShape(
-                                            12.dp
-                                        )
+                                        shape = RoundedCornerShape(12.dp)
                                     )
                                 } else Modifier
                             )
@@ -283,10 +314,8 @@ private fun SelectModArchiveCard(
 
                         if (ue4ssState.isLastSelectedArchiveInvalid) {
                             HeightSpacer(16.dp)
-                            val ins =
-                                remember { MutableInteractionSource() }
-                            val clipBoardManager =
-                                LocalClipboardManager.current
+                            val ins = remember { MutableInteractionSource() }
+                            val clipBoardManager = LocalClipboardManager.current
                             val text = buildAnnotatedString {
                                 append("[Error][invalid archive]: ${ue4ssState.statusMessage}")
                             }
@@ -294,7 +323,7 @@ private fun SelectModArchiveCard(
                             SimpleTooltip("click to copy") {
                                 Row(
                                     modifier = Modifier
-                                        .clip(_root_ide_package_.androidx.compose.foundation.shape.RoundedCornerShape(12.dp))
+                                        .clip(RoundedCornerShape(12.dp))
                                         .background(Material3Theme.colorScheme.error)
                                         .clickable(
                                             interactionSource = ins,
@@ -305,10 +334,7 @@ private fun SelectModArchiveCard(
                                             )
                                             coroutineScope.launch {
                                                 snackbar.currentSnackbarData?.dismiss()
-                                                snackbar.showSnackbar(
-                                                    message = "Copied to clipboard",
-                                                    withDismissAction = true
-                                                )
+                                                snackbar.showSnackbar(message = "Copied to clipboard", withDismissAction = true)
                                             }
                                         }
                                         .padding(6.dp),
@@ -332,20 +358,18 @@ private fun SelectModArchiveCard(
                                     }
                                 }
                             }
-                        } else if (ue4ssState.isInvalidModsDirectory) {
+                        } else if (ue4ssState.isInvalidGameDirectory) {
                             HeightSpacer(16.dp)
-                            val ins =
-                                remember { MutableInteractionSource() }
-                            val clipBoardManager =
-                                LocalClipboardManager.current
+                            val ins = remember { MutableInteractionSource() }
+                            val clipBoardManager = LocalClipboardManager.current
                             val text = buildAnnotatedString {
-                                append("[Error][invalid mods dir]: ${ue4ssState.statusMessage}")
+                                append("[Error][invalid game dir]: ${ue4ssState.statusMessage}")
                             }
                             val coroutineScope = rememberCoroutineScope()
                             SimpleTooltip("click to copy") {
                                 Row(
                                     modifier = Modifier
-                                        .clip(_root_ide_package_.androidx.compose.foundation.shape.RoundedCornerShape(12.dp))
+                                        .clip(RoundedCornerShape(12.dp))
                                         .background(Material3Theme.colorScheme.error)
                                         .clickable(
                                             interactionSource = ins,
@@ -356,10 +380,7 @@ private fun SelectModArchiveCard(
                                             )
                                             coroutineScope.launch {
                                                 snackbar.currentSnackbarData?.dismiss()
-                                                snackbar.showSnackbar(
-                                                    message = "Copied to clipboard",
-                                                    withDismissAction = true
-                                                )
+                                                snackbar.showSnackbar(message = "Copied to clipboard", withDismissAction = true)
                                             }
                                         }
                                         .padding(10.dp),
@@ -372,7 +393,7 @@ private fun SelectModArchiveCard(
                                         style = Material3Theme.typography.bodyMedium,
                                     )
                                     Box(modifier = Modifier.size(32.dp).align(Alignment.Top)) {
-                                        if (ins.collectIsHoveredAsState().value) {
+                                        if (/*ins.collectIsHoveredAsState().value*/ true) {
                                             Icon(
                                                 modifier = Modifier.size(24.dp).align(Alignment.Center),
                                                 painter = painterResource("drawable/icon_copy_24px.png"),

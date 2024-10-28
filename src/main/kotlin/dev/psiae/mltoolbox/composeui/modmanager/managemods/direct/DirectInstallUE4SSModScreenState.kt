@@ -1,6 +1,9 @@
-package dev.psiae.mltoolbox.composeui.modmanager
+package dev.psiae.mltoolbox.composeui.modmanager.managemods.direct
 
 import androidx.compose.runtime.*
+import com.github.junrar.Junrar
+import com.github.junrar.exception.RarException
+import com.github.junrar.exception.UnsupportedRarV5Exception
 import dev.psiae.mltoolbox.composeui.core.ComposeUIContext
 import dev.psiae.mltoolbox.composeui.core.locals.LocalComposeUIContext
 import dev.psiae.mltoolbox.java.jFile
@@ -12,17 +15,22 @@ import io.github.vinceglb.filekit.core.PickerType
 import kotlinx.coroutines.*
 import net.lingala.zip4j.ZipFile
 import net.lingala.zip4j.exception.ZipException
+import net.sf.sevenzipjbinding.ArchiveFormat
+import net.sf.sevenzipjbinding.SevenZip
+import net.sf.sevenzipjbinding.SevenZipException
+import net.sf.sevenzipjbinding.impl.RandomAccessFileInStream
+import net.sf.sevenzipjbinding.impl.RandomAccessFileOutStream
 import java.io.FileNotFoundException
 import java.io.IOException
 import java.io.RandomAccessFile
 
 @Composable
-fun rememberInstallUE4SSModState(
-    modManagerScreenState: ModManagerScreenState
-): InstallUE4SSModState {
+fun rememberDirectInstallUE4SSModScreenState(
+    directInstallModScreenState: DirectInstallModScreenState
+): DirectInstallUE4SSModScreenState {
     val composeUIContext = LocalComposeUIContext.current
-    val state = remember(modManagerScreenState) {
-        InstallUE4SSModState(modManagerScreenState, composeUIContext)
+    val state = remember(directInstallModScreenState) {
+        DirectInstallUE4SSModScreenState(directInstallModScreenState, composeUIContext)
     }
     DisposableEffect(state) {
         state.stateEnter()
@@ -31,8 +39,8 @@ fun rememberInstallUE4SSModState(
     return state
 }
 
-class InstallUE4SSModState(
-    val modManagerScreenState: ModManagerScreenState,
+class DirectInstallUE4SSModScreenState(
+    val directInstallModScreenState: DirectInstallModScreenState,
     val uiContext: ComposeUIContext
 ) {
     private val lifetime = SupervisorJob()
@@ -87,9 +95,9 @@ class InstallUE4SSModState(
                 statusMessage = null
                 async {
                     val pick = FileKit.pickFile(
-                        type = PickerType.File(listOf("zip")),
+                        type = PickerType.File(listOf("zip", "rar", "7z")),
                         mode = PickerMode.Multiple(),
-                        title = "Select downloaded UE4SS Mod(s) archive (*.zip)",
+                        title = "Select downloaded UE4SS Mod(s) archive (*.zip, *.rar, *.7z)",
                         initialDirectory = "C:",
                         platformSettings = FileKitPlatformSettings(
                             parentWindow = awtWindow
@@ -133,6 +141,7 @@ class InstallUE4SSModState(
         isInvalidModsDirectory = false
         isInstalledSuccessfully = false
         statusMessage = "awaiting IO worker ..."
+        val gameBinaryFile = directInstallModScreenState.manageDirectModsScreenState.manageModsScreenState.modManagerScreenState.requireGameBinaryFile()
         withContext(Dispatchers.IO) {
             statusMessage = "preparing ..."
 
@@ -141,28 +150,28 @@ class InstallUE4SSModState(
             run {
                 var lockedFile: jFile? = null
                 if (installDir.exists() && !run {
-                    var open = true
-                    open = installDir.walkBottomUp().all { f ->
-                        if (f.isFile) {
-                            if (f.canWrite()) {
-                                var ch: RandomAccessFile? = null
-                                try {
-                                    ch = RandomAccessFile(f, "rw")
-                                    ch.channel.lock()
-                                } catch (ex: IOException) {
-                                    open = false
-                                    lockedFile = f
-                                } finally {
-                                    ch?.close()
+                        var open = true
+                        open = installDir.walkBottomUp().all { f ->
+                            if (f.isFile) {
+                                if (f.canWrite()) {
+                                    var ch: RandomAccessFile? = null
+                                    try {
+                                        ch = RandomAccessFile(f, "rw")
+                                        ch.channel.lock()
+                                    } catch (ex: IOException) {
+                                        open = false
+                                        lockedFile = f
+                                    } finally {
+                                        ch?.close()
+                                    }
+                                } else {
+                                    // TODO
                                 }
-                            } else {
-                                // TODO
                             }
+                            open
                         }
                         open
-                    }
-                    open
-                }) {
+                    }) {
                     isLoading = false
                     isInvalidModsDirectory = true
                     statusMessage = "unable to lock ue4ss_mods_install directory from app directory, ${lockedFile?.let {
@@ -187,20 +196,117 @@ class InstallUE4SSModState(
             }
 
             statusMessage = "extracting ..."
-            runCatching {
-                mods.forEach { file ->
-                    ZipFile(file).use { zipFile ->
-                        zipFile.extractAll(System.getProperty("user.dir") + "\\temp\\ue4ss_mods_install\\${zipFile.file.name}")
+            mods.forEach { file ->
+                val dest = jFile(System.getProperty("user.dir") + "\\temp\\ue4ss_mods_install\\${file.name}")
+                if (file.extension.equals("rar", ignoreCase = true)) {
+                    runCatching {
+                        dest.mkdirs()
+                        Junrar.extract(file, dest)
+                    }.onFailure { junrarExtractException ->
+                        when (junrarExtractException) {
+                            is UnsupportedRarV5Exception -> {
+                                runCatching {
+                                    RandomAccessFile(file, "r").use { r ->
+                                        RandomAccessFileInStream(r).use { sevenZipR ->
+                                            SevenZip
+                                                .openInArchive(ArchiveFormat.RAR5, sevenZipR)
+                                                .use { inArchive ->
+                                                    inArchive.simpleInterface.archiveItems.forEach { archiveItem ->
+                                                        RandomAccessFile(jFile("${dest.absolutePath}\\${archiveItem.path}"), "rw").use {
+                                                            archiveItem.extractSlow(RandomAccessFileOutStream(it))
+                                                        }
+                                                    }
+                                                }
+                                        }
+                                    }
+                                }.onFailure { sevenZipExtractException ->
+                                    if (sevenZipExtractException is SevenZipException) {
+                                        isLoading = false
+                                        isLastSelectedArchiveInvalid = true
+                                        statusMessage = "unable to extract rar5 archive: ${file.name}"
+                                        return@withContext
+                                    } else if (sevenZipExtractException is IOException) {
+                                        isLoading = false
+                                        isLastSelectedArchiveInvalid = true
+                                        statusMessage = "unable to extract rar5 archive: ${file.name} (IO ERROR)"
+                                        return@withContext
+                                    }
+                                    throw sevenZipExtractException
+                                }
+                            }
+                            is RarException -> {
+                                isLoading = false
+                                isLastSelectedArchiveInvalid = true
+                                statusMessage = "unable to extract rar archive: ${file.name}"
+                                return@withContext
+                            }
+                            is IOException -> {
+                                isLoading = false
+                                isLastSelectedArchiveInvalid = true
+                                statusMessage = "unable to extract rar archive: ${file.name} (IO ERROR)"
+                                return@withContext
+                            }
+                            else -> {
+                                throw junrarExtractException
+                            }
+                        }
+                    }
+                } else if (file.extension.equals("7z", ignoreCase = true)) {
+                    runCatching {
+                        dest.mkdirs()
+                        RandomAccessFile(file, "r").use { r ->
+                            RandomAccessFileInStream(r).use { sevenZipR ->
+                                SevenZip
+                                    .openInArchive(ArchiveFormat.SEVEN_ZIP, sevenZipR)
+                                    .use { inArchive ->
+                                        inArchive.simpleInterface.archiveItems.forEach { archiveItem ->
+                                            RandomAccessFile(jFile("${dest.absolutePath}\\${archiveItem.path}"), "rw").use {
+                                                archiveItem.extractSlow(RandomAccessFileOutStream(it))
+                                            }
+                                        }
+                                    }
+                            }
+                        }
+                    }.onFailure { sevenZipExtractException ->
+                        sevenZipExtractException.printStackTrace()
+                        if (sevenZipExtractException is SevenZipException) {
+                            isLoading = false
+                            isLastSelectedArchiveInvalid = true
+                            statusMessage = "unable to extract 7z archive: ${file.name}"
+                            return@withContext
+                        } else if (sevenZipExtractException is IOException) {
+                            isLoading = false
+                            isLastSelectedArchiveInvalid = true
+                            statusMessage = "unable to extract 7z archive: ${file.name} (IO ERROR)"
+                            return@withContext
+                        }
+                        throw sevenZipExtractException
+                    }
+                } else {
+                    runCatching {
+                        ZipFile(file).use { zipFile ->
+                            zipFile.extractAll(dest.absolutePath)
+                        }
+                    }.onFailure { ex ->
+                        when (ex) {
+                            is RarException -> {
+                                isLoading = false
+                                isLastSelectedArchiveInvalid = true
+                                statusMessage = "unable to extract zip archive: ${file.name}"
+                                return@withContext
+                            }
+                            is IOException -> {
+                                isLoading = false
+                                isLastSelectedArchiveInvalid = true
+                                statusMessage = "unable to extract zip archive: ${file.name} (IO ERROR)"
+                                return@withContext
+                            }
+                            else -> {
+                                throw ex
+                            }
+                        }
                     }
                 }
-            }.onFailure { ex ->
-                if (ex is ZipException) {
-                    isLoading = false
-                    isLastSelectedArchiveInvalid = true
-                    statusMessage = "unable to extract archive"
-                    return@withContext
-                }
-                throw ex
             }
 
             statusMessage = "verifying mods ..."
@@ -250,7 +356,7 @@ class InstallUE4SSModState(
 
 
             statusMessage = "verifying target game dir ..."
-            val gameDir = modManagerScreenState.gameBinaryFile?.parentFile
+            val gameDir = gameBinaryFile?.parentFile
             if (gameDir == null || !gameDir.exists()) {
                 isLoading = false
                 isInvalidModsDirectory = true
@@ -293,31 +399,31 @@ class InstallUE4SSModState(
 
             var lockedFile: jFile? = null
             if (!run {
-                var open = true
-                open = directoriesToOverwrite.all { dir ->
-                    var dirOpen = true
-                    dir.walkBottomUp().forEach { f ->
-                        if (f.isFile) {
-                            if (f.canWrite()) {
-                                var ch: RandomAccessFile? = null
-                                try {
-                                    ch = RandomAccessFile(f, "rw")
-                                    ch!!.channel.lock()
-                                } catch (ex: IOException) {
-                                    lockedFile = f
-                                    dirOpen = false
-                                } finally {
-                                    ch?.close()
+                    var open = true
+                    open = directoriesToOverwrite.all { dir ->
+                        var dirOpen = true
+                        dir.walkBottomUp().forEach { f ->
+                            if (f.isFile) {
+                                if (f.canWrite()) {
+                                    var ch: RandomAccessFile? = null
+                                    try {
+                                        ch = RandomAccessFile(f, "rw")
+                                        ch!!.channel.lock()
+                                    } catch (ex: IOException) {
+                                        lockedFile = f
+                                        dirOpen = false
+                                    } finally {
+                                        ch?.close()
+                                    }
+                                } else {
+                                    // TODO
                                 }
-                            } else {
-                                // TODO
                             }
                         }
+                        dirOpen
                     }
-                    dirOpen
-                }
-                open
-            }) {
+                    open
+                }) {
                 isLoading = false
                 isInvalidModsDirectory = true
                 statusMessage = "unable to lock ${lockedFile!!.let {

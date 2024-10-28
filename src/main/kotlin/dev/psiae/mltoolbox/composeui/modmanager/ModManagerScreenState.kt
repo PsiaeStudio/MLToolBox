@@ -81,7 +81,7 @@ class ModManagerScreenState(
 
 
     fun stateEnter() {
-        _coroutineScope = CoroutineScope(uiContext.dispatchContext.mainDispatcher)
+        _coroutineScope = CoroutineScope(uiContext.dispatchContext.mainDispatcher.immediate)
 
         init()
     }
@@ -148,7 +148,7 @@ class ModManagerScreenState(
             if (launchingGame) return@launch
             launchingGame = true
             withContext(Dispatchers.IO) {
-                gameBinaryFile?.absolutePath?.let {
+                requireGameBinaryFile().absolutePath?.let {
                     Runtime.getRuntime().exec(it)
                 }
             }
@@ -157,7 +157,7 @@ class ModManagerScreenState(
     }
 
     fun launchGameVanilla() {
-        ManorLordsVanillaLauncher(coroutineScope, gameBinaryFile!!)
+        ManorLordsVanillaLauncher(coroutineScope, requireGameBinaryFile())
             .apply {
                 launch()
             }
@@ -206,7 +206,7 @@ class ModManagerScreenState(
         checkingUE4SSInstallationStatusMessage = "Checking UE4SS Installation ..."
 
         ue4ssNotInstalledMessage = null
-        val workingDir = gameBinaryFile?.parentFile
+        val workingDir = requireGameBinaryFile().parentFile
             ?: error("[ModManagerScreenState]: missing workingDir")
         withContext(Dispatchers.IO) {
             val dwmApi = jFile("$workingDir\\dwmapi.dll")

@@ -1,4 +1,4 @@
-package dev.psiae.mltoolbox.composeui.modmanager
+package dev.psiae.mltoolbox.composeui.modmanager.managemods.direct
 
 import androidx.compose.runtime.*
 import dev.psiae.mltoolbox.composeui.core.ComposeUIContext
@@ -9,29 +9,32 @@ import io.github.vinceglb.filekit.core.FileKitPlatformSettings
 import io.github.vinceglb.filekit.core.PickerMode
 import io.github.vinceglb.filekit.core.PickerType
 import kotlinx.coroutines.*
-import okio.FileNotFoundException
-import okio.IOException
+import net.lingala.zip4j.ZipFile
+import net.lingala.zip4j.exception.ZipException
+import java.io.FileNotFoundException
+import java.io.IOException
 import java.io.RandomAccessFile
-import net.lingala.zip4j.exception.ZipException as ZipException4j
-import net.lingala.zip4j.ZipFile as ZipFile4j
 
 @Composable
-fun rememberInstallUE4SSState(
-    modManagerScreenState: ModManagerScreenState
-): InstallUE4SSState {
-    val composeUIContext = LocalComposeUIContext.current
-    val state = remember(modManagerScreenState) {
-        InstallUE4SSState(modManagerScreenState, composeUIContext)
+fun rememberDirectInstallUE4SSScreenState(
+    directInstallModScreenState: DirectInstallModScreenState
+): DirectInstallUE4SSScreenState {
+    val uiContext = LocalComposeUIContext.current
+    val state = remember(directInstallModScreenState) {
+        DirectInstallUE4SSScreenState(directInstallModScreenState, uiContext)
     }
+
     DisposableEffect(state) {
         state.stateEnter()
         onDispose { state.stateExit() }
     }
+
+
     return state
 }
 
-class InstallUE4SSState(
-    val modManagerScreenState: ModManagerScreenState,
+class DirectInstallUE4SSScreenState(
+    val directInstallModScreenState: DirectInstallModScreenState,
     val uiContext: ComposeUIContext
 ) {
 
@@ -134,6 +137,7 @@ class InstallUE4SSState(
         isInvalidGameDirectory = false
         isInstalledSuccessfully = false
         statusMessage = "..."
+        val gameBinaryFile = directInstallModScreenState.manageDirectModsScreenState.manageModsScreenState.modManagerScreenState.requireGameBinaryFile()
         withContext(Dispatchers.IO) {
             statusMessage = "preparing ..."
 
@@ -142,28 +146,28 @@ class InstallUE4SSState(
             run {
                 var lockedFile: jFile? = null
                 if (installDir.exists() && !run {
-                    var open = true
-                    open = installDir.walkBottomUp().all { f ->
-                        if (f.isFile) {
-                            if (f.canWrite()) {
-                                var ch: RandomAccessFile? = null
-                                try {
-                                    ch = RandomAccessFile(f, "rw")
-                                    ch.channel.lock()
-                                } catch (ex: IOException) {
-                                    open = false
-                                    lockedFile = f
-                                } finally {
-                                    ch?.close()
+                        var open = true
+                        open = installDir.walkBottomUp().all { f ->
+                            if (f.isFile) {
+                                if (f.canWrite()) {
+                                    var ch: RandomAccessFile? = null
+                                    try {
+                                        ch = RandomAccessFile(f, "rw")
+                                        ch.channel.lock()
+                                    } catch (ex: IOException) {
+                                        open = false
+                                        lockedFile = f
+                                    } finally {
+                                        ch?.close()
+                                    }
+                                } else {
+                                    // TODO
                                 }
-                            } else {
-                                // TODO
                             }
+                            open
                         }
                         open
-                    }
-                    open
-                }) {
+                    }) {
                     isLoading = false
                     isInvalidGameDirectory = true
                     statusMessage = "unable to lock ue4ss_install directory from app directory, ${lockedFile?.let {
@@ -190,11 +194,11 @@ class InstallUE4SSState(
 
             statusMessage = "extracting ..."
             runCatching {
-                ZipFile4j(file).use { zipFile ->
+                ZipFile(file).use { zipFile ->
                     zipFile.extractAll(System.getProperty("user.dir") + "\\temp\\ue4ss_install")
                 }
             }.onFailure { ex ->
-                if (ex is ZipException4j) {
+                if (ex is ZipException) {
                     isLoading = false
                     isLastSelectedArchiveInvalid = true
                     statusMessage = "unable to extract archive"
@@ -222,7 +226,7 @@ class InstallUE4SSState(
             }
             statusMessage = "preparing install ..."
 
-            val gameDir = modManagerScreenState.gameBinaryFile?.parentFile
+            val gameDir = gameBinaryFile?.parentFile
             if (gameDir == null || !gameDir.exists()) {
                 isLoading = false
                 isInvalidGameDirectory = true
@@ -232,18 +236,18 @@ class InstallUE4SSState(
             runCatching {
                 val gameDwmApi = jFile("$gameDir\\dwmapi.dll")
                 if (gameDwmApi.exists() && !run {
-                    var open = true
-                    var ch: RandomAccessFile? = null
-                    try {
-                        ch = RandomAccessFile(gameDwmApi, "rw")
-                        ch!!.channel.lock()
-                    } catch (ex: IOException) {
-                        open = false
-                    } finally {
-                        ch?.close()
-                    }
-                    open
-                }) {
+                        var open = true
+                        var ch: RandomAccessFile? = null
+                        try {
+                            ch = RandomAccessFile(gameDwmApi, "rw")
+                            ch!!.channel.lock()
+                        } catch (ex: IOException) {
+                            open = false
+                        } finally {
+                            ch?.close()
+                        }
+                        open
+                    }) {
                     isLoading = false
                     isInvalidGameDirectory = true
                     statusMessage = "unable to lock dwmapi.dll from game directory, it might be opened in another process"
@@ -252,28 +256,28 @@ class InstallUE4SSState(
                 val ue4ssFolder = jFile("$gameDir\\ue4ss")
                 var lockedFile: jFile? = null
                 if (ue4ssFolder.exists() && !run {
-                    var open = true
-                    open = ue4ssFolder.walkBottomUp().all { f ->
-                        if (f.isFile) {
-                            if (f.canWrite()) {
-                                var ch: RandomAccessFile? = null
-                                try {
-                                    ch = RandomAccessFile(f, "rw")
-                                    ch!!.channel.lock()
-                                } catch (ex: IOException) {
-                                    open = false
-                                    lockedFile = f
-                                } finally {
-                                    ch?.close()
+                        var open = true
+                        open = ue4ssFolder.walkBottomUp().all { f ->
+                            if (f.isFile) {
+                                if (f.canWrite()) {
+                                    var ch: RandomAccessFile? = null
+                                    try {
+                                        ch = RandomAccessFile(f, "rw")
+                                        ch!!.channel.lock()
+                                    } catch (ex: IOException) {
+                                        open = false
+                                        lockedFile = f
+                                    } finally {
+                                        ch?.close()
+                                    }
+                                } else {
+                                    // TODO
                                 }
-                            } else {
-                                // TODO
                             }
+                            open
                         }
                         open
-                    }
-                    open
-                }) {
+                    }) {
                     isLoading = false
                     isInvalidGameDirectory = true
                     statusMessage = "unable to lock ue4ss folder from game directory, ${lockedFile?.let {
@@ -293,7 +297,7 @@ class InstallUE4SSState(
                     if (!f.delete()) {
                         isLoading = false
                         isInvalidGameDirectory = true
-                        statusMessage = "unable to delete ${f.let { 
+                        statusMessage = "unable to delete ${f.let {
                             it.absolutePath
                                 .drop(it.absolutePath.indexOf(gameDir.absolutePath)+gameDir.absolutePath.length)
                                 .replace(' ', '\u00A0')
@@ -332,6 +336,4 @@ class InstallUE4SSState(
         }
         return false
     }
-
-
 }

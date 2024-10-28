@@ -10,3 +10,16 @@ fun String.removeSuffix(
     ignoreCase: Boolean = false
 ) = if (endsWith(suffix, ignoreCase = ignoreCase)) dropLast(suffix.length) else this
 
+fun String.endsWithLineSeparator(): Boolean {
+    // empty
+    if (isEmpty())
+        return false
+    // Unix and Windows
+    if (endsWith("\n"))
+        return true
+    // Mac
+    if (endsWith("\r"))
+        return true
+    return false
+}
+

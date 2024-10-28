@@ -41,7 +41,7 @@ class BrowseScreenState(
     var selectedTab by mutableStateOf("nexusmods")
 
     fun stateEnter() {
-        _coroutineScope = CoroutineScope(uiContext.dispatchContext.mainDispatcher)
+        _coroutineScope = CoroutineScope(uiContext.dispatchContext.mainDispatcher.immediate)
         init()
     }
 

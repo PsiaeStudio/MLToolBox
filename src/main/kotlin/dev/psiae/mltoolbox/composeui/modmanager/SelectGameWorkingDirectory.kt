@@ -368,22 +368,13 @@ fun ChangeGameWorkingDirectory(modManagerComposeState: ModManagerScreenState) {
 
 @Composable
 private fun GameExecutablePicker(state: SelectGameWorkingDirectoryState) {
-    /*NativeFilePickerDialog(
-        title = "Select Game Executable (*.exe)",
-        initialDir = state.chosenDir?.path,
-        initialFileName = "",
-        onCloseRequest = { state.filePick(it) },
-        filter = { listOf("Executable File (*.exe)" to arrayOf("exe")) },
-        mode = JnaFileChooser.Mode.Files,
-        multiSelect = false
-    )*/
     val window = LocalAwtWindow.current
     LaunchedEffect(Unit) {
         val pick = FileKit.pickFile(
             title = "Select Game Executable (*.exe)",
             type = PickerType.File(listOf("exe")),
             platformSettings = FileKitPlatformSettings(parentWindow = window),
-            initialDirectory = state.chosenDir?.path
+            initialDirectory = state.chosenDir?.absolutePath
         )
         state.filePick(pick?.file)
     }

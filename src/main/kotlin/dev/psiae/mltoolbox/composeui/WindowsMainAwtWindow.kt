@@ -95,7 +95,7 @@ class WindowsMainAwtWindow(
 
         window
             .apply {
-                setSize(800, 600)
+                setSize(960, 540)
                 title = "ManorLords Toolbox"
                 iconImage = run {
                     val resourcePath = "drawable/icon_manorlords_logo_text.png"

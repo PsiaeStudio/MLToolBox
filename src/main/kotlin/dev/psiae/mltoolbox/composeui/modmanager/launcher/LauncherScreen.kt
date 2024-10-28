@@ -3,7 +3,6 @@ package dev.psiae.mltoolbox.composeui.modmanager.launcher
 import androidx.compose.foundation.*
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsDraggedAsState
-import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -18,11 +17,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.BaselineShift
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
@@ -33,8 +35,13 @@ import dev.psiae.mltoolbox.composeui.gestures.defaultSurfaceGestureModifiers
 import dev.psiae.mltoolbox.composeui.modmanager.ModManagerScreenState
 import dev.psiae.mltoolbox.composeui.modmanager.SimpleTooltip
 import dev.psiae.mltoolbox.composeui.modmanager.launcher.contained.ContainedLauncherScreen
-import dev.psiae.mltoolbox.composeui.modmanager.launcher.shared.DirectLauncherScreen
+import dev.psiae.mltoolbox.composeui.modmanager.launcher.direct.DirectLauncherScreen
+import dev.psiae.mltoolbox.composeui.modmanager.manageplayset.ManagePlaysetScreenState
+import dev.psiae.mltoolbox.composeui.theme.md3.LocalIsDarkTheme
 import dev.psiae.mltoolbox.composeui.theme.md3.Material3Theme
+import dev.psiae.mltoolbox.uifoundation.themes.md3.MD3Spec
+import dev.psiae.mltoolbox.uifoundation.themes.md3.incrementsDp
+import dev.psiae.mltoolbox.uifoundation.themes.md3.padding
 
 @Composable
 fun LauncherScreen(
@@ -63,12 +70,12 @@ private fun LauncherScreen(
                 Box(
                     modifier = Modifier.zIndex(if (state.selectedTab == "direct") 1f else 0f)
                 ) {
-                    DirectLauncherUI(state)
+                    DirectLauncherScreen(state)
                 }
                 Box(
                     modifier = Modifier.zIndex(if (state.selectedTab == "contained") 1f else 0f)
                 ) {
-                    ContainedLauncherUI(state)
+                    ManagedLauncherScreen(state)
                 }
             }
         }
@@ -89,43 +96,50 @@ private fun TopNavigation(
             modifier = Modifier
                 .align(Alignment.CenterHorizontally)
                 .width(1200.dp)
+                .padding(horizontal = 8.dp)
                 .hoverable(contentIns)
                 .horizontalScroll(scrollState)
         ) {
             Row(
                 modifier = Modifier
                     .align(Alignment.Center)
-                    .background(Material3Theme.colorScheme.surfaceContainer, RoundedCornerShape(24.dp)),
-                verticalAlignment = Alignment.CenterVertically
             ) {
-                TopNavigationItemUI(
-                    displayName = "Direct",
-                    isSelected = state.selectedTab == "direct",
-                    width = 260.dp,
-                    enabled = true,
-                    icon = NoOpPainter,
-                    tintIcon = true,
-                    tooltipDescription = "Use executable directly in the game install folder",
-                    onClick = { state.selectedTab = "direct"  }
-                )
-                TopNavigationItemUI(
-                    displayName = "Contained (WIP)",
-                    isSelected = state.selectedTab == "contained",
-                    width = 260.dp,
-                    enabled = false,
-                    icon = NoOpPainter,
-                    tintIcon = true,
-                    tooltipDescription = "Use executable contained in this app",
-                    onClick = { state.selectedTab = "contained"  }
-                )
+                WidthSpacer(8.dp)
+                Row(
+                    modifier = Modifier
+                        .shadow(3.dp, RoundedCornerShape(24.dp))
+                        .background(Material3Theme.colorScheme.surfaceContainer, RoundedCornerShape(24.dp)),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    TopNavigationItemUI(
+                        displayName = "Direct",
+                        isSelected = state.selectedTab == "direct",
+                        width = 260.dp,
+                        enabled = true,
+                        icon = NoOpPainter,
+                        tintIcon = true,
+                        tooltipDescription = "Launch executable directly in the game install directory",
+                        onClick = { state.selectedTab = "direct"  }
+                    )
+                    TopNavigationItemUI(
+                        displayName = "Managed (WIP)",
+                        isSelected = state.selectedTab == "managed",
+                        width = 260.dp,
+                        enabled = false,
+                        icon = NoOpPainter,
+                        tintIcon = true,
+                        tooltipDescription = "Launch executable managed in this app",
+                        onClick = { state.selectedTab = "managed"  }
+                    )
+                }
+                WidthSpacer(8.dp)
             }
         }
         if (
             run {
                 // remove true to only start show when interacted
                 true ||
-                        contentIns.collectIsHoveredAsState().value or scrollBarIns.collectIsDraggedAsState().value or
-                        scrollBarIns.collectIsFocusedAsState().value
+                        contentIns.collectIsHoveredAsState().value or scrollBarIns.collectIsDraggedAsState().value
             } && scrollState.canScrollForward or scrollState.canScrollBackward
         ) {
             HeightSpacer(2.dp)
@@ -257,14 +271,14 @@ private fun TopNavigationItemUI(
 }
 
 @Composable
-fun DirectLauncherUI(
+fun DirectLauncherScreen(
     launcherScreenState: LauncherScreenState
 ) {
     DirectLauncherScreen(launcherScreenState)
 }
 
 @Composable
-fun ContainedLauncherUI(
+fun ManagedLauncherScreen(
     launcherScreenState: LauncherScreenState
 ) {
     ContainedLauncherScreen(launcherScreenState)

@@ -11,12 +11,11 @@ import dev.psiae.mltoolbox.composeui.theme.md3.Material3Theme
 fun supportProjectMainScreenDrawerItem(): MainDrawerDestination {
     val content = @Composable { DonateMainScreen() }
     val painter = NoOpPainter
-    val iconTint = Material3Theme.colorScheme.onSurface
-    return remember(painter, iconTint) {
+    return remember(painter) {
         MainDrawerDestination(
             id = "support_project",
             icon = painter,
-            iconTint = iconTint,
+            iconTint = null,
             name = "Support Project",
             content = content
         )

@@ -35,6 +35,8 @@ import dev.psiae.mltoolbox.composeui.WidthSpacer
 import dev.psiae.mltoolbox.composeui.gestures.defaultSurfaceGestureModifiers
 import dev.psiae.mltoolbox.composeui.modmanager.browse.BrowseScreen
 import dev.psiae.mltoolbox.composeui.modmanager.launcher.LauncherScreen
+import dev.psiae.mltoolbox.composeui.modmanager.managemods.ManageModsScreen
+import dev.psiae.mltoolbox.composeui.modmanager.manageplayset.ManagePlaysetScreen
 import dev.psiae.mltoolbox.composeui.theme.md3.LocalIsDarkTheme
 import dev.psiae.mltoolbox.composeui.theme.md3.Material3Theme
 import dev.psiae.mltoolbox.uifoundation.themes.md3.MD3Spec
@@ -78,19 +80,26 @@ fun ModManagerMainScreen() {
                         LauncherScreen(modManagerScreen)
                     }
                     Box(
-                        modifier = Modifier.zIndex(if (modManagerScreen.currentDrawerDestination == "browse") 1f else 0f)
+                        modifier = Modifier.zIndex(if (modManagerScreen.currentDrawerDestination == "browse_mods") 1f else 0f)
                     ) {
                         BrowseScreen(modManagerScreen)
                     }
+                    Box(
+                        modifier = Modifier.zIndex(if (modManagerScreen.currentDrawerDestination == "manage_mods") 1f else 0f)
+                    ) {
+                        ManageModsScreen(modManagerScreen)
+                    }
+                    Box(
+                        modifier = Modifier.zIndex(if (modManagerScreen.currentDrawerDestination == "manage_playset") 1f else 0f)
+                    ) {
+                        ManagePlaysetScreen(modManagerScreen)
+                    }
+                    Box(
+                        modifier = Modifier.zIndex(0.5f)
+                    ) {
+                        WIPScreen()
+                    }
                 }
-            }
-            if (modManagerScreen.isUE4SSNotInstalled) {
-                UE4SSNotInstalledUI(modManagerScreen)
-            }
-            if (modManagerScreen.installUE4SS) {
-                InstallUE4SS(modManagerScreen)
-            } else if (modManagerScreen.installUE4SSMod) {
-                InstallUE4SSMods(modManagerScreen)
             }
         }
     }
@@ -176,8 +185,7 @@ private fun DashBoardUI(
                     Column(
                         modifier = Modifier.weight(1f)
                     ) {
-                        CommonsSection(modManagerScreenState)
-                        InstalledModListSection(modManagerScreenState)
+                        WIPScreen()
                     }
                 }
                 VerticalScrollbar(
@@ -204,252 +212,6 @@ private fun DashBoardUI(
                     }
                 )
             }
-        }
-    }
-}
-
-@Composable
-private fun CommonsSection(
-    modManagerScreenState: ModManagerScreenState
-) {
-    Column(
-        modifier = Modifier.padding(horizontal = 16.dp)
-    ) {
-        /*CommonsSectionHeader()
-        HeightSpacer(4.dp)*/
-        CommonsSectionContent(modManagerScreenState)
-    }
-}
-
-@Composable
-private fun CommonsSectionHeader(
-
-) {
-    Row(
-        modifier = Modifier.height(20.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = "Common",
-            style = Material3Theme.typography.titleSmall,
-            color = Color(252, 252, 252),
-            maxLines = 1
-        )
-    }
-}
-
-@Composable
-private fun CommonsSectionContent(
-    modManagerScreen: ModManagerScreenState
-) {
-    val scrollState = rememberScrollState()
-    val contentIns = remember { MutableInteractionSource() }
-    val scrollBarIns = remember { MutableInteractionSource() }
-    Column(
-        modifier = Modifier
-            .hoverable(contentIns)
-    ) {
-        Row(
-            modifier = Modifier
-                .horizontalScroll(scrollState),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            run {
-                val enabled = true
-                Box(
-                    modifier = Modifier
-                        .alpha(if (enabled) 1f else 0.38f)
-                        .padding(top = 6.dp)
-                        .clip(RoundedCornerShape(50))
-                        .border(
-                            width = 1.dp,
-                            color = Material3Theme.colorScheme.outline,
-                            shape = RoundedCornerShape(50)
-                        )
-                        .clickable(enabled = enabled) { modManagerScreen.userInputInstallUE4SS() }
-                        .padding(vertical = 6.dp, horizontal = 12.dp)
-                ) {
-                    Row(
-                        Modifier.align(Alignment.Center),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            modifier = Modifier.size(24.dp).clip(RoundedCornerShape(50)),
-                            painter = painterResource("drawable/icon_re_ue4ss_repo_logo.png"),
-                            contentDescription = null,
-                            tint = Color.Unspecified
-                        )
-                        WidthSpacer(10.dp)
-                        Text(
-                            modifier = Modifier.alpha(if (enabled) 1f else 0.68f),
-                            text = "Install UE4SS",
-                            style = Material3Theme.typography.labelLarge,
-                            color = Material3Theme.colorScheme.primary,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-                }
-            }
-            run {
-                WidthSpacer(8.dp)
-                val enabled = true
-                Box(
-                    modifier = Modifier
-                        .alpha(if (enabled) 1f else 0.38f)
-                        .padding(top = 6.dp)
-                        .clip(RoundedCornerShape(50))
-                        .border(
-                            width = 1.dp,
-                            color = Material3Theme.colorScheme.outline,
-                            shape = RoundedCornerShape(50)
-                        )
-                        .clickable(enabled = enabled) { modManagerScreen.userInputInstallUE4SSMod() }
-                        .padding(vertical = 6.dp, horizontal = 12.dp)
-                ) {
-                    Row(
-                        Modifier.align(Alignment.Center),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        HeightSpacer(24.dp)
-                        Text(
-                            modifier = Modifier.alpha(if (enabled) 1f else 0.68f),
-                            text = "Install UE4SS Mod",
-                            style = Material3Theme.typography.labelLarge,
-                            color = Material3Theme.colorScheme.primary,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-                }
-            }
-            run {
-                WidthSpacer(16.dp)
-                val enabled = !modManagerScreen.launchingGame
-                Box(
-                    modifier = Modifier
-                        .alpha(if (enabled) 1f else 0.38f)
-                        .padding(top = 6.dp)
-                        .clip(RoundedCornerShape(50))
-                        .border(
-                            width = 1.dp,
-                            color = Material3Theme.colorScheme.outline,
-                            shape = RoundedCornerShape(50)
-                        )
-                        .clickable(enabled = enabled) {
-                            modManagerScreen.launchGameVanilla()
-                        }
-                        .padding(vertical = 6.dp, horizontal = 12.dp)
-                ) {
-                    Row(
-                        Modifier.align(Alignment.Center),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        if (modManagerScreen.launchingGame) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(24.dp),
-                                color = Color(0xFFc9cb78),
-                                strokeWidth = 1.dp
-                            )
-                        } else {
-                            Icon(
-                                modifier = Modifier.size(24.dp).clip(RoundedCornerShape(50)),
-                                painter = painterResource("drawable/1.ico"),
-                                contentDescription = null,
-                                tint = Color.Unspecified
-                            )
-                        }
-                        WidthSpacer(10.dp)
-                        Text(
-                            modifier = Modifier.alpha(if (enabled) 1f else 0.68f),
-                            text = "Launch Shared VANILLA",
-                            style = Material3Theme.typography.labelLarge,
-                            color = Material3Theme.colorScheme.primary,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-                }
-            }
-            run {
-                WidthSpacer(8.dp)
-                val enabled = !modManagerScreen.launchingGame
-                Box(
-                    modifier = Modifier
-                        .alpha(if (enabled) 1f else 0.38f)
-                        .padding(top = 6.dp)
-                        .clip(RoundedCornerShape(50))
-                        .border(
-                            width = 1.dp,
-                            color = Material3Theme.colorScheme.outline,
-                            shape = RoundedCornerShape(50)
-                        )
-                        .clickable(enabled = enabled) { modManagerScreen.launchGame() }
-                        .padding(vertical = 6.dp, horizontal = 12.dp)
-                ) {
-                    Row(
-                        Modifier.align(Alignment.Center),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        if (modManagerScreen.launchingGame) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(24.dp),
-                                color = Color(0xFFc9cb78),
-                                strokeWidth = 1.dp
-                            )
-                        } else {
-                            Icon(
-                                modifier = Modifier.size(24.dp).clip(RoundedCornerShape(50)),
-                                painter = painterResource("drawable/1.ico"),
-                                contentDescription = null,
-                                tint = Color.Unspecified
-                            )
-                        }
-                        WidthSpacer(10.dp)
-                        Text(
-                            modifier = Modifier.alpha(if (enabled) 1f else 0.68f),
-                            text = "Launch Shared MODDED",
-                            style = Material3Theme.typography.labelLarge,
-                            color = Material3Theme.colorScheme.primary,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-                }
-            }
-        }
-        if (
-            run {
-                // remove true to only start show when intreracted
-                true || contentIns.collectIsHoveredAsState().value or scrollBarIns.collectIsDraggedAsState().value or scrollBarIns.collectIsFocusedAsState().value
-            } && scrollState.canScrollForward or scrollState.canScrollBackward
-        ) {
-            HeightSpacer(2.dp)
-            HorizontalScrollbar(
-                modifier = Modifier
-                    .width(
-                        with(LocalDensity.current) {
-                            remember(this) {
-                                derivedStateOf { scrollState.viewportSize.toDp() }
-                            }.value
-                        }
-                    )
-                    .padding(start = 8.dp, end = 8.dp, top = 4.dp, bottom = 4.dp)
-                    .then(
-                        if (scrollState.canScrollForward || scrollState.canScrollBackward)
-                            Modifier.background(Color.White.copy(alpha = 0.06f))
-                        else Modifier
-                    ),
-                adapter = rememberScrollbarAdapter(scrollState),
-                style = remember {
-                    defaultScrollbarStyle().copy(
-                        unhoverColor = Color.White.copy(alpha = 0.25f),
-                        hoverColor = Color.White.copy(alpha = 0.50f),
-                        thickness = 4.dp
-                    )
-                },
-                interactionSource = scrollBarIns
-            )
         }
     }
 }
@@ -682,6 +444,19 @@ private fun NavigationDrawer(
                 .verticalScroll(scrollState),
             horizontalAlignment = Alignment.Start
         ) {
+            Box(
+                modifier = Modifier
+                    .height(48.dp)
+                    .padding(horizontal = 16.dp),
+                contentAlignment = Alignment.CenterStart
+            ) {
+                Text(
+                    text = "General",
+                    style = Material3Theme.typography.titleSmall,
+                    color = Material3Theme.colorScheme.onSurfaceVariant,
+                    maxLines = 1
+                )
+            }
             NavigationDrawerItemUI(
                 isSelected = modManagerScreenState
                     .currentDrawerDestination == "dashboard",
@@ -704,14 +479,55 @@ private fun NavigationDrawer(
             ) {
                 HorizontalDivider(modifier = Modifier.align(Alignment.Center).width(216.dp).padding(horizontal = 8.dp))
             }
+            Box(
+                modifier = Modifier
+                    .height(48.dp)
+                    .padding(horizontal = 16.dp),
+                contentAlignment = Alignment.CenterStart
+            ) {
+                Text(
+                    text = "Mods",
+                    style = Material3Theme.typography.titleSmall,
+                    color = Material3Theme.colorScheme.onSurfaceVariant,
+                    maxLines = 1
+                )
+            }
             NavigationDrawerItemUI(
                 isSelected = modManagerScreenState
-                    .currentDrawerDestination == "browse",
+                    .currentDrawerDestination == "browse_mods",
                 displayName = "Browse Mods",
                 enabled = true,
                 icon = painterResource("drawable/icon_browse_internet_outline_outlined_24px.png"),
-                onClick = { modManagerScreenState.currentDrawerDestination = "browse" }
+                onClick = { modManagerScreenState.currentDrawerDestination = "browse_mods" }
             )
+            NavigationDrawerItemUI(
+                isSelected = modManagerScreenState
+                    .currentDrawerDestination == "manage_mods",
+                displayName = "Manage Mods",
+                enabled = true,
+                icon = NoOpPainter,
+                onClick = { modManagerScreenState.currentDrawerDestination = "manage_mods" }
+            )
+            NavigationDrawerItemUI(
+                isSelected = modManagerScreenState
+                    .currentDrawerDestination == "manage_playset",
+                displayName = "Manage Playset",
+                enabled = true,
+                icon = NoOpPainter,
+                onClick = { modManagerScreenState.currentDrawerDestination = "manage_playset" }
+            )
+            SimpleTooltip(
+                "Interact with modded game instances (WIP)"
+            ) {
+                NavigationDrawerItemUI(
+                    isSelected = modManagerScreenState
+                        .currentDrawerDestination == "mods_runtime",
+                    displayName = "Runtime (WIP)",
+                    enabled = false,
+                    icon = NoOpPainter,
+                    onClick = { modManagerScreenState.currentDrawerDestination = "mods_runtime" }
+                )
+            }
         }
         if (scrollState.canScrollForward or scrollState.canScrollBackward) {
             VerticalScrollbar(
@@ -799,8 +615,10 @@ private fun NavigationDrawerItemUI(
                     else
                         Material3Theme.colorScheme.onSurfaceVariant
                 )
-                WidthSpacer(12.dp)
+            } else {
+                WidthSpacer(24.dp)
             }
+            WidthSpacer(12.dp)
             Text(
                 modifier = Modifier.alpha(if (enabled) 1f else 0.38f),
                 text = displayName,

@@ -27,7 +27,16 @@ dependencies {
 
     implementation("io.github.vinceglb:filekit-core:0.8.7")
     implementation("io.coil-kt.coil3:coil-compose:3.0.0-rc01")
+
+    // zip
     implementation("net.lingala.zip4j:zip4j:2.11.5")
+
+    // rar
+    implementation("com.github.junrar:junrar:7.5.5")
+
+    // zip, rar5, 7z
+    implementation("net.sf.sevenzipjbinding:sevenzipjbinding:16.02-2.01")
+    implementation("net.sf.sevenzipjbinding:sevenzipjbinding-windows-amd64:16.02-2.01")
 
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.7.3")
 }

@@ -1,20 +1,20 @@
-package dev.psiae.mltoolbox.composeui.modmanager.launcher
+package dev.psiae.mltoolbox.composeui.modmanager.managemods
 
 import androidx.compose.runtime.*
 import dev.psiae.mltoolbox.composeui.core.ComposeUIContext
 import dev.psiae.mltoolbox.composeui.core.locals.LocalComposeUIContext
 import dev.psiae.mltoolbox.composeui.modmanager.ModManagerScreenState
-import dev.psiae.mltoolbox.java.jFile
-import kotlinx.coroutines.*
-import java.io.Closeable
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 
 @Composable
-fun rememberLauncherScreenState(
+fun rememberManageModsScreenState(
     modManagerScreenState: ModManagerScreenState
-): LauncherScreenState {
+): ManageModsScreenState {
     val uiContext = LocalComposeUIContext.current
     val state = remember(modManagerScreenState) {
-        LauncherScreenState(modManagerScreenState, uiContext)
+        ManageModsScreenState(modManagerScreenState, uiContext)
     }
 
     DisposableEffect(state) {
@@ -25,7 +25,7 @@ fun rememberLauncherScreenState(
     return state
 }
 
-class LauncherScreenState(
+class ManageModsScreenState(
     val modManagerScreenState: ModManagerScreenState,
     val uiContext: ComposeUIContext
 ) {

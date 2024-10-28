@@ -1,21 +1,23 @@
-package dev.psiae.mltoolbox.composeui.modmanager.browse
+package dev.psiae.mltoolbox.composeui.modmanager.manageplayset
 
 import androidx.compose.foundation.*
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsDraggedAsState
-import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ripple.LocalRippleTheme
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalDensity
@@ -29,19 +31,21 @@ import dev.psiae.mltoolbox.composeui.NoOpPainter
 import dev.psiae.mltoolbox.composeui.WidthSpacer
 import dev.psiae.mltoolbox.composeui.gestures.defaultSurfaceGestureModifiers
 import dev.psiae.mltoolbox.composeui.modmanager.ModManagerScreenState
+import dev.psiae.mltoolbox.composeui.modmanager.SimpleTooltip
 import dev.psiae.mltoolbox.composeui.modmanager.WIPScreen
+import dev.psiae.mltoolbox.composeui.modmanager.manageplayset.direct.ManageDirectPlaysetContent
 import dev.psiae.mltoolbox.composeui.theme.md3.Material3Theme
 
 @Composable
-fun BrowseScreen(
-    screenState: ModManagerScreenState
+fun ManagePlaysetScreen(
+    modManagerScreenState: ModManagerScreenState
 ) {
-    BrowseScreen(rememberBrowseScreenState(screenState))
+    ManagePlaysetScreen(rememberManagePlaysetScreenState(modManagerScreenState))
 }
 
 @Composable
-private fun BrowseScreen(
-    state: BrowseScreenState
+fun ManagePlaysetScreen(
+    state: ManagePlaysetScreenState
 ) {
     Box(
         modifier = Modifier
@@ -50,21 +54,25 @@ private fun BrowseScreen(
             .defaultSurfaceGestureModifiers()
     ) {
         Column {
-            Box(
-                modifier = Modifier.padding(16.dp)
-            ) {
+            HeightSpacer(16.dp)
+            Box {
                 TopNavigation(state)
             }
+            HeightSpacer(8.dp)
             Box {
                 Box(
-                    modifier = Modifier.zIndex(if (state.selectedTab == "local") 1f else 0f)
+                    modifier = Modifier.zIndex(if (state.selectedTab == "direct") 1f else 0f)
                 ) {
-                    BrowseLocalModsUI(state)
+                    ManageDirectPlaysetContent(state)
                 }
                 Box(
-                    modifier = Modifier.zIndex(if (state.selectedTab == "nexusmods") 1f else 0f)
+                    modifier = Modifier.zIndex(if (state.selectedTab == "contained") 1f else 0f)
                 ) {
-                    BrowseNexusModsUI(state)
+                }
+                Box(
+                    modifier = Modifier.zIndex(0.5f)
+                ) {
+                    WIPScreen()
                 }
             }
         }
@@ -73,7 +81,7 @@ private fun BrowseScreen(
 
 @Composable
 private fun TopNavigation(
-    state: BrowseScreenState
+    state: ManagePlaysetScreenState
 ) {
     val scrollState = rememberScrollState()
     val contentIns = remember { MutableInteractionSource() }
@@ -85,24 +93,43 @@ private fun TopNavigation(
             modifier = Modifier
                 .align(Alignment.CenterHorizontally)
                 .width(1200.dp)
+                .padding(horizontal = 8.dp)
                 .hoverable(contentIns)
                 .horizontalScroll(scrollState)
         ) {
             Row(
                 modifier = Modifier
                     .align(Alignment.Center)
-                    .background(Material3Theme.colorScheme.surfaceContainer, RoundedCornerShape(24.dp)),
-                verticalAlignment = Alignment.CenterVertically
             ) {
-                TopNavigationItemUI(
-                    displayName = "NexusMods",
-                    isSelected = state.selectedTab == "nexusmods",
-                    width = 260.dp,
-                    enabled = true,
-                    icon = painterResource("drawable/icon_nexusmods_24px.png"),
-                    tintIcon = false,
-                    onClick = { state.selectedTab = "nexusmods"  }
-                )
+                WidthSpacer(8.dp)
+                Row(
+                    modifier = Modifier
+                        .shadow(3.dp, RoundedCornerShape(24.dp))
+                        .background(Material3Theme.colorScheme.surfaceContainer, RoundedCornerShape(24.dp)),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    TopNavigationItemUI(
+                        displayName = "Direct",
+                        isSelected = state.selectedTab == "direct",
+                        width = 260.dp,
+                        enabled = true,
+                        icon = NoOpPainter,
+                        tintIcon = true,
+                        tooltipDescription = "Playset installed directly in the game install directory",
+                        onClick = { state.selectedTab = "direct"  }
+                    )
+                    TopNavigationItemUI(
+                        displayName = "Managed (WIP)",
+                        isSelected = state.selectedTab == "managed",
+                        width = 260.dp,
+                        enabled = false,
+                        icon = NoOpPainter,
+                        tintIcon = true,
+                        tooltipDescription = "Playset installed in this app",
+                        onClick = { state.selectedTab = "managed"  }
+                    )
+                }
+                WidthSpacer(8.dp)
             }
         }
         if (
@@ -151,15 +178,15 @@ private fun TopNavigationItemUI(
     enabled: Boolean,
     icon: Painter = NoOpPainter,
     tintIcon: Boolean = true,
+    tooltipDescription: String?,
     onClick: () -> Unit,
 ) {
-    val ins = remember { MutableInteractionSource()  }
+    val ins = remember { MutableInteractionSource() }
     Box(
         modifier = Modifier
             .width(width)
             .height(48.dp)
             .clip(RoundedCornerShape(24.dp))
-            .clickable(enabled = enabled, onClick = onClick)
             .clickable(enabled = enabled, indication = null, interactionSource = ins, onClick = onClick)
             .composed {
                 val rippleTheme = LocalRippleTheme.current
@@ -221,20 +248,21 @@ private fun TopNavigationItemUI(
                 maxLines = 1,
                 color = Material3Theme.colorScheme.onSecondaryContainer,
             )
+            tooltipDescription?.let {
+                WidthSpacer(12.dp)
+                SimpleTooltip(
+                    tooltipDescription
+                ) {
+                    Icon(
+                        modifier = Modifier
+                            .size(18.dp)
+                            .align(Alignment.CenterVertically),
+                        painter = painterResource("drawable/icon_info_filled_32px.png"),
+                        contentDescription = null,
+                        tint = Material3Theme.colorScheme.secondary
+                    )
+                }
+            }
         }
     }
-}
-
-@Composable
-fun BrowseLocalModsUI(
-    browseScreenState: BrowseScreenState
-) {
-    WIPScreen()
-}
-
-@Composable
-fun BrowseNexusModsUI(
-    browseScreenState: BrowseScreenState
-) {
-    WIPScreen()
 }

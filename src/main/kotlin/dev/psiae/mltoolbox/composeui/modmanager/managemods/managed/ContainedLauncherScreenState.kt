@@ -1,20 +1,20 @@
-package dev.psiae.mltoolbox.composeui.modmanager.launcher.shared
+package dev.psiae.mltoolbox.composeui.modmanager.managemods.managed
 
 import androidx.compose.runtime.*
 import dev.psiae.mltoolbox.composeui.core.ComposeUIContext
 import dev.psiae.mltoolbox.composeui.core.locals.LocalComposeUIContext
-import dev.psiae.mltoolbox.composeui.modmanager.launcher.LauncherScreenState
+import dev.psiae.mltoolbox.composeui.modmanager.managemods.ManageModsScreenState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 
 @Composable
-fun rememberDirectLauncherScreenState(
-    launcherScreenState: LauncherScreenState
-): SharedLauncherScreenState {
+fun rememberContainedLauncherScreenState(
+    manageModsScreenState: ManageModsScreenState
+): ContainedLauncherScreenState {
     val uiContext = LocalComposeUIContext.current
-    val state = remember(launcherScreenState) {
-        SharedLauncherScreenState(launcherScreenState, uiContext)
+    val state = remember(manageModsScreenState) {
+        ContainedLauncherScreenState(manageModsScreenState, uiContext)
     }
 
     DisposableEffect(state) {
@@ -25,8 +25,8 @@ fun rememberDirectLauncherScreenState(
     return state
 }
 
-class SharedLauncherScreenState(
-    private val launcherScreenState: LauncherScreenState,
+class ContainedLauncherScreenState(
+    private val manageModsScreenState: ManageModsScreenState,
     private val uiContext: ComposeUIContext
 ) {
 
@@ -38,10 +38,10 @@ class SharedLauncherScreenState(
             "_coroutineScope is null"
         }
 
-    var selectedTab by mutableStateOf("direct")
+    var selectedTab by mutableStateOf("shared")
 
     fun stateEnter() {
-        _coroutineScope = CoroutineScope(uiContext.dispatchContext.mainDispatcher)
+        _coroutineScope = CoroutineScope(uiContext.dispatchContext.mainDispatcher.immediate)
         init()
     }
 
