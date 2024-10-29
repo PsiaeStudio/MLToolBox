@@ -56,8 +56,7 @@ private object Swing {
 
     ) :
         MainImmediateCoroutineDispatcher(),
-        Delay by MAIN_DISPATCHER as Delay
-    {
+        Delay by MAIN_DISPATCHER as Delay {
 
         override fun dispatch(context: CoroutineContext, block: Runnable) {
             if (SwingUtilities.isEventDispatchThread()) block.run()

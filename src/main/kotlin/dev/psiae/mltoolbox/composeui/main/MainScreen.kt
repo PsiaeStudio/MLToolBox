@@ -292,7 +292,7 @@ fun MainScreenLayoutBody() {
             val dest = remember { mutableStateOf<StableList<MainDrawerDestination>>(StableList(emptyList()), neverEqualPolicy()) }
             Column(
                 modifier = Modifier
-                    .widthIn(max = 160.dp),
+                    .widthIn(max = 120.dp),
             ) {
                 Column(
                     modifier = Modifier.weight(1f)
@@ -342,7 +342,19 @@ fun MainScreenLayoutBody() {
                         )
                     }
                 }
-                HeightSpacer(40.dp)
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.CenterHorizontally)
+                        .height(60.dp)
+                ) {
+                    Text(
+                        modifier = Modifier.align(Alignment.Center),
+                        text = "v1.0.0-alpha05",
+                        style = Material3Theme.typography.bodySmall,
+                        color = Material3Theme.colorScheme.onSurface,
+                        maxLines = 1
+                    )
+                }
             }
             Spacer(modifier = Modifier.width(MD3Spec.margin.spacingOfWindowWidthDp(maxWidth.value).dp))
             MainScreenLayoutScreenHost(dest.value)

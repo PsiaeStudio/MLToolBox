@@ -27,10 +27,12 @@ import dev.psiae.mltoolbox.composeui.WidthSpacer
 import dev.psiae.mltoolbox.composeui.gestures.defaultSurfaceGestureModifiers
 import dev.psiae.mltoolbox.composeui.theme.md3.LocalIsDarkTheme
 import dev.psiae.mltoolbox.composeui.theme.md3.Material3Theme
+import dev.psiae.mltoolbox.composeui.theme.md3.currentLocalAbsoluteOnSurfaceColor
 import dev.psiae.mltoolbox.java.jFile
 import dev.psiae.mltoolbox.platform.content.filepicker.JnaFileChooserWindowHost
 import dev.psiae.mltoolbox.platform.content.filepicker.win32.JnaFileChooser
 import dev.psiae.mltoolbox.uifoundation.themes.md3.MD3Spec
+import dev.psiae.mltoolbox.uifoundation.themes.md3.MD3Theme
 import dev.psiae.mltoolbox.uifoundation.themes.md3.incrementsDp
 import dev.psiae.mltoolbox.uifoundation.themes.md3.padding
 import io.github.vinceglb.filekit.core.FileKit
@@ -344,10 +346,12 @@ fun SelectGameWorkingDirectoryScreen(
                         else Modifier
                     ),
                 adapter = rememberScrollbarAdapter(scrollState),
-                style = remember {
+                style = run {
+                    val absOnSurface = MD3Theme.currentLocalAbsoluteOnSurfaceColor()
                     defaultScrollbarStyle().copy(
-                        unhoverColor = Color.White.copy(alpha = 0.25f),
-                        hoverColor = Color.White.copy(alpha = 0.50f)
+                        unhoverColor = absOnSurface.copy(alpha = 0.25f),
+                        hoverColor = absOnSurface.copy(alpha = 0.50f),
+                        thickness = 4.dp
                     )
                 }
             )

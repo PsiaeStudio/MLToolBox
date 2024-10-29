@@ -39,7 +39,9 @@ import dev.psiae.mltoolbox.composeui.modmanager.managemods.ManageModsScreen
 import dev.psiae.mltoolbox.composeui.modmanager.manageplayset.ManagePlaysetScreen
 import dev.psiae.mltoolbox.composeui.theme.md3.LocalIsDarkTheme
 import dev.psiae.mltoolbox.composeui.theme.md3.Material3Theme
+import dev.psiae.mltoolbox.composeui.theme.md3.currentLocalAbsoluteOnSurfaceColor
 import dev.psiae.mltoolbox.uifoundation.themes.md3.MD3Spec
+import dev.psiae.mltoolbox.uifoundation.themes.md3.MD3Theme
 import dev.psiae.mltoolbox.uifoundation.themes.md3.incrementsDp
 import dev.psiae.mltoolbox.uifoundation.themes.md3.padding
 
@@ -199,15 +201,17 @@ private fun DashBoardUI(
                         )
                         .padding(start = 8.dp, end = 8.dp, top = 4.dp, bottom = 4.dp)
                         .then(
-                            if (scrollState.canScrollForward || scrollState.canScrollBackward)
+                            if (scrollState.canScrollForward or scrollState.canScrollBackward)
                                 Modifier.background(Color.White.copy(alpha = 0.06f))
                             else Modifier
                         ),
                     adapter = rememberScrollbarAdapter(scrollState),
-                    style = remember {
+                    style = run {
+                        val absOnSurface = MD3Theme.currentLocalAbsoluteOnSurfaceColor()
                         defaultScrollbarStyle().copy(
-                            unhoverColor = Color.White.copy(alpha = 0.25f),
-                            hoverColor = Color.White.copy(alpha = 0.50f)
+                            unhoverColor = absOnSurface.copy(alpha = 0.25f),
+                            hoverColor = absOnSurface.copy(alpha = 0.50f),
+                            thickness = 4.dp
                         )
                     }
                 )
@@ -403,15 +407,17 @@ private fun UE4SSNotInstalledUI(
                         )
                         .padding(start = 8.dp, end = 8.dp, top = 4.dp, bottom = 4.dp)
                         .then(
-                            if (scrollState.canScrollForward || scrollState.canScrollBackward)
+                            if (scrollState.canScrollForward or scrollState.canScrollBackward)
                                 Modifier.background(Color.White.copy(alpha = 0.06f))
                             else Modifier
                         ),
                     adapter = rememberScrollbarAdapter(scrollState),
-                    style = remember {
+                    style = run {
+                        val absOnSurface = MD3Theme.currentLocalAbsoluteOnSurfaceColor()
                         defaultScrollbarStyle().copy(
-                            unhoverColor = Color.White.copy(alpha = 0.25f),
-                            hoverColor = Color.White.copy(alpha = 0.50f)
+                            unhoverColor = absOnSurface.copy(alpha = 0.25f),
+                            hoverColor = absOnSurface.copy(alpha = 0.50f),
+                            thickness = 4.dp
                         )
                     }
                 )
@@ -542,15 +548,17 @@ private fun NavigationDrawer(
                     .padding(start = 4.dp, end = 4.dp, top = 16.dp, bottom = 16.dp)
                     .clip(RoundedCornerShape(0.dp, 16.dp, 16.dp, 0.dp))
                     .then(
-                        if (scrollState.canScrollForward || scrollState.canScrollBackward)
+                        if (scrollState.canScrollForward or scrollState.canScrollBackward)
                             Modifier.background(Color.White.copy(alpha = 0.06f))
                         else Modifier
                     ),
                 adapter = rememberScrollbarAdapter(scrollState),
-                style = remember {
+                style = run {
+                    val absOnSurface = MD3Theme.currentLocalAbsoluteOnSurfaceColor()
                     defaultScrollbarStyle().copy(
-                        unhoverColor = Color.White.copy(alpha = 0.25f),
-                        hoverColor = Color.White.copy(alpha = 0.50f)
+                        unhoverColor = absOnSurface.copy(alpha = 0.25f),
+                        hoverColor = absOnSurface.copy(alpha = 0.50f),
+                        thickness = 4.dp
                     )
                 }
             )

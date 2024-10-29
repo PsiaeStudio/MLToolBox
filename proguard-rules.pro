@@ -19,5 +19,9 @@
 #keep runtime annotation for JNA
 -keepattributes RuntimeVisibleAnnotations
 
+#keep debug info
+-keepattributes SourceFile,LineNumberTable
+-renamesourcefileattribute SourceFile
+
 -printseeds obfuscation/seeds.txt
 -printmapping obfuscation/mapping.txt

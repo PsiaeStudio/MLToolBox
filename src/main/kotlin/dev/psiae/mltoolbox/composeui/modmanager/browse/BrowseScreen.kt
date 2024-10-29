@@ -31,6 +31,8 @@ import dev.psiae.mltoolbox.composeui.gestures.defaultSurfaceGestureModifiers
 import dev.psiae.mltoolbox.composeui.modmanager.ModManagerScreenState
 import dev.psiae.mltoolbox.composeui.modmanager.WIPScreen
 import dev.psiae.mltoolbox.composeui.theme.md3.Material3Theme
+import dev.psiae.mltoolbox.composeui.theme.md3.currentLocalAbsoluteOnSurfaceColor
+import dev.psiae.mltoolbox.uifoundation.themes.md3.MD3Theme
 
 @Composable
 fun BrowseScreen(
@@ -125,15 +127,16 @@ private fun TopNavigation(
                     )
                     .padding(start = 8.dp, end = 8.dp, top = 4.dp, bottom = 4.dp)
                     .then(
-                        if (scrollState.canScrollForward || scrollState.canScrollBackward)
+                        if (scrollState.canScrollForward or scrollState.canScrollBackward)
                             Modifier.background(Color.White.copy(alpha = 0.06f))
                         else Modifier
                     ),
                 adapter = rememberScrollbarAdapter(scrollState),
-                style = remember {
+                style = run {
+                    val absOnSurface = MD3Theme.currentLocalAbsoluteOnSurfaceColor()
                     defaultScrollbarStyle().copy(
-                        unhoverColor = Color.White.copy(alpha = 0.25f),
-                        hoverColor = Color.White.copy(alpha = 0.50f),
+                        unhoverColor = absOnSurface.copy(alpha = 0.25f),
+                        hoverColor = absOnSurface.copy(alpha = 0.50f),
                         thickness = 4.dp
                     )
                 },

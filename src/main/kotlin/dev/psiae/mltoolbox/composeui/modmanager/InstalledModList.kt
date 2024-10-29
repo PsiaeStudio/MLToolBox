@@ -24,6 +24,8 @@ import dev.psiae.mltoolbox.composeui.HeightSpacer
 import dev.psiae.mltoolbox.composeui.WidthSpacer
 import dev.psiae.mltoolbox.composeui.gestures.defaultSurfaceGestureModifiers
 import dev.psiae.mltoolbox.composeui.theme.md3.Material3Theme
+import dev.psiae.mltoolbox.composeui.theme.md3.currentLocalAbsoluteOnSurfaceColor
+import dev.psiae.mltoolbox.uifoundation.themes.md3.MD3Theme
 
 @Composable
 fun InstalledModListSection(
@@ -179,15 +181,17 @@ private fun InstalledModListLazyColumn(installedModListState: InstalledModListSt
                 )
                 .padding(start = 0.dp, end = 0.dp, top = 0.dp, bottom = 0.dp)
                 .then(
-                    if (scrollState.canScrollForward || scrollState.canScrollBackward)
+                    if (scrollState.canScrollForward or scrollState.canScrollBackward)
                         Modifier.background(Color.White.copy(alpha = 0.06f))
                     else Modifier
                 ),
             adapter = rememberScrollbarAdapter(scrollState),
-            style = remember {
+            style = run {
+                val absOnSurface = MD3Theme.currentLocalAbsoluteOnSurfaceColor()
                 defaultScrollbarStyle().copy(
-                    unhoverColor = Color.White.copy(alpha = 0.25f),
-                    hoverColor = Color.White.copy(alpha = 0.50f)
+                    unhoverColor = absOnSurface.copy(alpha = 0.25f),
+                    hoverColor = absOnSurface.copy(alpha = 0.50f),
+                    thickness = 4.dp
                 )
             }
         )

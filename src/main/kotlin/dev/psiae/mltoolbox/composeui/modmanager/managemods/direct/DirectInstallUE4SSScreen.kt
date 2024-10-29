@@ -34,6 +34,7 @@ import dev.psiae.mltoolbox.composeui.gestures.defaultSurfaceGestureModifiers
 import dev.psiae.mltoolbox.composeui.modmanager.SimpleTooltip
 import dev.psiae.mltoolbox.composeui.theme.md3.LocalIsDarkTheme
 import dev.psiae.mltoolbox.composeui.theme.md3.Material3Theme
+import dev.psiae.mltoolbox.composeui.theme.md3.currentLocalAbsoluteOnSurfaceColor
 import dev.psiae.mltoolbox.composeui.theme.md3.surfaceColorAtElevation
 import dev.psiae.mltoolbox.java.jFile
 import dev.psiae.mltoolbox.uifoundation.themes.md3.MD3Theme
@@ -175,10 +176,12 @@ fun DirectInstallUE4SSScreen(
                                 else Modifier
                             ),
                         adapter = rememberScrollbarAdapter(scrollState),
-                        style = remember {
+                        style = run {
+                            val absOnSurface = MD3Theme.currentLocalAbsoluteOnSurfaceColor()
                             defaultScrollbarStyle().copy(
-                                unhoverColor = Color.White.copy(alpha = 0.25f),
-                                hoverColor = Color.White.copy(alpha = 0.50f)
+                                unhoverColor = absOnSurface.copy(alpha = 0.25f),
+                                hoverColor = absOnSurface.copy(alpha = 0.50f),
+                                thickness = 4.dp
                             )
                         }
                     )

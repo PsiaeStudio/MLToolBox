@@ -258,3 +258,6 @@ val LocalIsDarkTheme = staticCompositionLocalOf<Boolean> { GLOBAL_THEME_IS_DARK 
 
 val MD3Theme.colorScheme
     @Composable get() = if (LocalIsDarkTheme.current) darkColorScheme else lightColorScheme
+
+@Composable
+fun MD3Theme.currentLocalAbsoluteOnSurfaceColor() = if (LocalIsDarkTheme.current) Color.White else Color.Black
