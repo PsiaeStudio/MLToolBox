@@ -15,6 +15,10 @@ repositories {
     google()
 }
 
+kotlin {
+    jvmToolchain(17)
+}
+
 dependencies {
     // Note, if you develop a library, you should use compose.desktop.common.
     // compose.desktop.currentOs should be used in launcher-sourceSet
@@ -49,6 +53,8 @@ compose.desktop {
             targetFormats(TargetFormat.Msi)
             packageName = "MLToolBox"
             packageVersion = "1.0.0"
+
+            modules("jdk.unsupported")
 
             windows {
                 iconFile.set(project.file("src/main/resources/drawable/icon_manorlords_logo_text.ico"))

@@ -9,6 +9,7 @@ import com.sun.nio.file.ExtendedOpenOption
 import dev.psiae.mltoolbox.app.MLToolBoxApp
 import dev.psiae.mltoolbox.java.jFile
 import dev.psiae.mltoolbox.ui.MainImmediateUIDispatcher
+import dev.psiae.mltoolbox.ui.MainUIDispatcher
 import dev.psiae.mltoolbox.ui.UIFoundation
 import dev.psiae.mltoolbox.ui.provideMainThread
 import kotlinx.coroutines.*
@@ -22,7 +23,6 @@ import java.awt.event.WindowListener
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
 import java.nio.file.FileSystemException
-import java.nio.file.OpenOption
 import java.nio.file.StandardOpenOption
 import javax.swing.*
 import kotlin.system.exitProcess
@@ -102,8 +102,64 @@ fun MainGUI(
     }
 }
 
-// TODO: FancyExceptionWindow, default as fallback
 
+
+fun querySystemOSBuildVersionStr(): String {
+    var buildVersionStr = "UNKNOWN_OS"
+    val osName = System.getProperty("os.name")
+    when {
+        osName.startsWith("Windows") -> {
+            val out = StringBuilder()
+            Runtime.getRuntime().exec("cmd /c ver").inputStream
+                .bufferedReader().readLines().forEachIndexed { i, line ->
+                    with(out) {
+                        if (isNotEmpty())
+                            if (i == 0) append("    ") else append(" ")
+                        append(line)
+                    }
+                }
+            buildVersionStr = out.toString().ifBlank { "Windows" }
+        }
+        osName.startsWith("Mac") -> {
+            val out = StringBuilder()
+            Runtime.getRuntime().exec("sw_vers -productName").inputStream
+                .bufferedReader().readLines().forEachIndexed { i, line ->
+                    with(out) {
+                        if (isNotEmpty())
+                            if (i == 0) append("    ") else append(" ")
+                        append(line)
+                    }
+                }
+
+            Runtime.getRuntime().exec("sw_vers -productVersion").inputStream
+                .bufferedReader().readLines().forEachIndexed { i, line ->
+                    with(out) {
+                        if (isNotEmpty())
+                            if (i == 0) append("    ") else append(" ")
+                        append(line)
+                    }
+                }
+
+            buildVersionStr = out.toString().ifBlank { "Mac" }
+        }
+        osName.startsWith("Linux") || osName.startsWith("LINUX") -> {
+            val out = StringBuilder()
+            val reader = jFile("/etc/os-release").bufferedReader()
+            var line = reader.readLine()
+            while (line != null) {
+                if (line.startsWith("PRETTY_NAME=")) {
+                    out.append(line.drop("PRETTY_NAME=".length).replace("\"", ""))
+                    break
+                }
+                line = reader.readLine()
+            }
+            buildVersionStr = out.toString().ifBlank { "Linux" }
+        }
+    }
+    return buildVersionStr
+}
+
+// TODO: FancyExceptionWindow, default as fallback
 
 private val DefaultExceptionWindow = { errorMsg: String, throwable: Throwable ->
     JOptionPane.showMessageDialog(JFrame().apply { size = Dimension(300, 300) },
@@ -130,8 +186,25 @@ private val DefaultExceptionWindow = { errorMsg: String, throwable: Throwable ->
                         append("Error")
                         if (errorMsg.isNotEmpty()) {
                             append(": $errorMsg")
+                            append("\n\n")
                         }
-                        append("\n\n$renderText")
+                        append(renderText)
+
+                        run {
+                            val jreName = System.getProperty("java.runtime.name")
+                            val jreVersion = System.getProperty("java.runtime.version")
+                            val jvmName = System.getProperty("java.vm.name")
+                            val jvmVersion = System.getProperty("java.vm.version")
+
+                            append("\n")
+                            append("\n$jreName (build $jreVersion)")
+                            append("\n$jvmName (build $jvmVersion)")
+
+                            runCatching {
+                                append("\n\n${querySystemOSBuildVersionStr()}")
+                            }
+                        }
+
                         append("\n\nCTRL + C  to copy")
                     }
                 text = textBuilder.toString()
@@ -230,7 +303,7 @@ private fun prepareUIFoundation() {
 private fun acquireProcessFileLock() = runCatching {
     runBlocking {
         val processLockJob = CompletableDeferred<Boolean>()
-        GlobalScope.launch {
+        GlobalScope.launch(UIFoundation.MainUIDispatcher.immediate) {
             async(Dispatchers.IO) {
                 runCatching {
                     jFile("mltoolboxapp").mkdir()
@@ -268,7 +341,8 @@ private fun acquireProcessFileLock() = runCatching {
                     }
                 }.onFailure { ex ->
                     runCatching { processLockJob.complete(false) }
-                    throw ex
+                    DefaultExceptionWindow("Exception during processLock", ex)
+                    exitProcess(0)
                 }
             }.await()
         }
@@ -278,7 +352,7 @@ private fun acquireProcessFileLock() = runCatching {
             onSuccess = { locked ->
                 if (!locked) {
                     runCatching {
-                        delay(1.minutes.inWholeMilliseconds)
+                        delay(3.minutes.inWholeMilliseconds)
                         DefaultSimpleErrorWindow("Timeout waiting for process.lock failure to exit, this is a bug if there is no other app process already running")
                     }
                     exitProcess(0)
