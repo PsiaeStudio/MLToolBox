@@ -1,6 +1,7 @@
 package dev.psiae.mltoolbox.composeui.modmanager.managemods.direct
 
 import androidx.compose.runtime.*
+import com.sun.nio.file.ExtendedOpenOption
 import dev.psiae.mltoolbox.composeui.core.ComposeUIContext
 import dev.psiae.mltoolbox.composeui.core.locals.LocalComposeUIContext
 import dev.psiae.mltoolbox.java.jFile
@@ -14,6 +15,14 @@ import net.lingala.zip4j.exception.ZipException
 import java.io.FileNotFoundException
 import java.io.IOException
 import java.io.RandomAccessFile
+import java.nio.ByteBuffer
+import java.nio.channels.FileChannel
+import java.nio.file.*
+import java.util.Comparator
+import kotlin.io.AccessDeniedException
+import kotlin.io.FileAlreadyExistsException
+import kotlin.io.NoSuchFileException
+import kotlin.io.path.*
 
 @Composable
 fun rememberDirectInstallUE4SSScreenState(
@@ -131,6 +140,7 @@ class DirectInstallUE4SSScreenState(
         }
     }
 
+    @OptIn(ExperimentalPathApi::class)
     suspend fun processPickedFile(file: jFile): Boolean {
         isLoading = true
         isLastSelectedArchiveInvalid = false
@@ -146,28 +156,30 @@ class DirectInstallUE4SSScreenState(
             run {
                 var lockedFile: jFile? = null
                 if (installDir.exists() && !run {
-                        var open = true
-                        open = installDir.walkBottomUp().all { f ->
-                            if (f.isFile) {
-                                if (f.canWrite()) {
-                                    var ch: RandomAccessFile? = null
-                                    try {
-                                        ch = RandomAccessFile(f, "rw")
-                                        ch.channel.lock()
-                                    } catch (ex: IOException) {
-                                        open = false
-                                        lockedFile = f
-                                    } finally {
-                                        ch?.close()
-                                    }
-                                } else {
-                                    // TODO
-                                }
+                    var open = true
+                    open = installDir.toPath().walk(PathWalkOption.INCLUDE_DIRECTORIES).all { f ->
+                        if (f.isRegularFile(LinkOption.NOFOLLOW_LINKS)) {
+                            var ch: FileChannel? = null
+                            try {
+                                ch = FileChannel.open(
+                                    f,
+                                    if (f.isWritable()) StandardOpenOption.WRITE else StandardOpenOption.READ,
+                                    StandardOpenOption.READ,
+                                    ExtendedOpenOption.NOSHARE_READ,
+                                    ExtendedOpenOption.NOSHARE_WRITE,
+                                    ExtendedOpenOption.NOSHARE_DELETE
+                                )
+                            } catch (ex: IOException) {
+                                open = false
+                                lockedFile = f.toFile()
+                            } finally {
+                                ch?.close()
                             }
-                            open
                         }
                         open
-                    }) {
+                    }
+                    open
+                }) {
                     isLoading = false
                     isInvalidGameDirectory = true
                     statusMessage = "unable to lock ue4ss_install directory from app directory, ${lockedFile?.let {
@@ -178,19 +190,28 @@ class DirectInstallUE4SSScreenState(
                     return@withContext
                 }
             }
-            if (installDir.exists()) installDir.walkBottomUp().forEach { f ->
-                if (!f.delete()) {
-                    isLoading = false
-                    isInvalidGameDirectory = true
-                    statusMessage = "unable to delete ${f.let {
-                        it.absolutePath
-                            .drop(it.absolutePath.indexOf(userDir.absolutePath)+userDir.absolutePath.length)
-                            .replace(' ', '\u00A0')
-                    }} from app directory, it might be opened in another process"
-                    return@withContext
-                }
-            }
 
+            if (installDir.exists())
+                installDir.toPath()
+                    .walk(PathWalkOption.INCLUDE_DIRECTORIES)
+                    .sortedWith(Comparator.reverseOrder())
+                    .forEach { f ->
+                        runCatching { f.deleteExisting() }
+                            .onFailure { e ->
+                                when (e) {
+                                    is NoSuchFileException, is DirectoryNotEmptyException, is IOException -> {
+                                        isLoading = false
+                                        isInvalidGameDirectory = true
+                                        statusMessage = "unable to delete ${f.toFile().let {
+                                            it.absolutePath
+                                                .drop(it.absolutePath.indexOf(userDir.absolutePath)+userDir.absolutePath.length)
+                                                .replace(' ', '\u00A0')
+                                        }} from app directory, it might be opened in another process"
+                                        return@withContext
+                                    }
+                                }
+                            }
+                    }
 
             statusMessage = "extracting ..."
             runCatching {
@@ -234,20 +255,28 @@ class DirectInstallUE4SSScreenState(
                 return@withContext
             }
             runCatching {
+
                 val gameDwmApi = jFile("$gameDir\\dwmapi.dll")
-                if (gameDwmApi.exists() && !run {
-                        var open = true
-                        var ch: RandomAccessFile? = null
-                        try {
-                            ch = RandomAccessFile(gameDwmApi, "rw")
-                            ch!!.channel.lock()
-                        } catch (ex: IOException) {
-                            open = false
-                        } finally {
-                            ch?.close()
-                        }
-                        open
-                    }) {
+                val gameDwmApiPath = gameDwmApi.toPath()
+                if (gameDwmApiPath.exists() && !run {
+                    var open = true
+                    var ch: FileChannel? = null
+                    try {
+                        ch = FileChannel.open(
+                            gameDwmApiPath,
+                            if (gameDwmApiPath.isWritable()) StandardOpenOption.WRITE else StandardOpenOption.READ,
+                            StandardOpenOption.READ,
+                            ExtendedOpenOption.NOSHARE_READ,
+                            ExtendedOpenOption.NOSHARE_WRITE,
+                            ExtendedOpenOption.NOSHARE_DELETE
+                        )
+                    } catch (ex: IOException) {
+                        open = false
+                    } finally {
+                        ch?.close()
+                    }
+                    open
+                }) {
                     isLoading = false
                     isInvalidGameDirectory = true
                     statusMessage = "unable to lock dwmapi.dll from game directory, it might be opened in another process"
@@ -256,28 +285,30 @@ class DirectInstallUE4SSScreenState(
                 val ue4ssFolder = jFile("$gameDir\\ue4ss")
                 var lockedFile: jFile? = null
                 if (ue4ssFolder.exists() && !run {
-                        var open = true
-                        open = ue4ssFolder.walkBottomUp().all { f ->
-                            if (f.isFile) {
-                                if (f.canWrite()) {
-                                    var ch: RandomAccessFile? = null
-                                    try {
-                                        ch = RandomAccessFile(f, "rw")
-                                        ch!!.channel.lock()
-                                    } catch (ex: IOException) {
-                                        open = false
-                                        lockedFile = f
-                                    } finally {
-                                        ch?.close()
-                                    }
-                                } else {
-                                    // TODO
-                                }
+                    var open = true
+                    open = ue4ssFolder.toPath().walk(PathWalkOption.INCLUDE_DIRECTORIES).all { f ->
+                        if (f.isRegularFile(LinkOption.NOFOLLOW_LINKS)) {
+                            var ch: FileChannel? = null
+                            try {
+                                ch = FileChannel.open(
+                                    f,
+                                    if (f.isWritable()) StandardOpenOption.WRITE else StandardOpenOption.READ,
+                                    StandardOpenOption.READ,
+                                    ExtendedOpenOption.NOSHARE_READ,
+                                    ExtendedOpenOption.NOSHARE_WRITE,
+                                    ExtendedOpenOption.NOSHARE_DELETE
+                                )
+                            } catch (ex: IOException) {
+                                open = false
+                                lockedFile = f.toFile()
+                            } finally {
+                                ch?.close()
                             }
-                            open
                         }
                         open
-                    }) {
+                    }
+                    open
+                }) {
                     isLoading = false
                     isInvalidGameDirectory = true
                     statusMessage = "unable to lock ue4ss folder from game directory, ${lockedFile?.let {
@@ -293,18 +324,28 @@ class DirectInstallUE4SSScreenState(
                     statusMessage = "unable to delete dwmapi.dll from game directory, it might be opened in another process"
                     return@withContext
                 }
-                if (ue4ssFolder.exists()) ue4ssFolder.walkBottomUp().forEach { f ->
-                    if (!f.delete()) {
-                        isLoading = false
-                        isInvalidGameDirectory = true
-                        statusMessage = "unable to delete ${f.let {
-                            it.absolutePath
-                                .drop(it.absolutePath.indexOf(gameDir.absolutePath)+gameDir.absolutePath.length)
-                                .replace(' ', '\u00A0')
-                        }} from game directory, it might be opened in another process"
-                        return@withContext
-                    }
-                }
+
+                if (ue4ssFolder.exists())
+                    ue4ssFolder.toPath()
+                        .walk(PathWalkOption.INCLUDE_DIRECTORIES)
+                        .sortedWith(Comparator.reverseOrder())
+                        .forEach { f ->
+                            runCatching { f.deleteExisting() }
+                                .onFailure { e ->
+                                    when (e) {
+                                        is NoSuchFileException, is DirectoryNotEmptyException, is IOException -> {
+                                            isLoading = false
+                                            isInvalidGameDirectory = true
+                                            statusMessage = "unable to delete ${f.toFile().let {
+                                                it.absolutePath
+                                                    .drop(it.absolutePath.indexOf(gameDir.absolutePath)+gameDir.absolutePath.length)
+                                                    .replace(' ', '\u00A0')
+                                            }} from game directory, it might be opened in another process"
+                                            return@withContext
+                                        }
+                                    }
+                                }
+                        }
             }.onFailure { ex ->
                 throw ex
             }

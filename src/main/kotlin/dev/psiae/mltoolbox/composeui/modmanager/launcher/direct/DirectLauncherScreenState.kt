@@ -5,10 +5,12 @@ import dev.psiae.mltoolbox.composeui.core.ComposeUIContext
 import dev.psiae.mltoolbox.composeui.core.locals.LocalComposeUIContext
 import dev.psiae.mltoolbox.composeui.modmanager.launcher.LauncherScreenState
 import dev.psiae.mltoolbox.java.jFile
+import dev.psiae.mltoolbox.utilskt.deleteRecursivelyBool
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import java.io.Closeable
 import java.io.IOException
+import kotlin.io.path.ExperimentalPathApi
 
 @Composable
 fun rememberDirectLauncherScreenState(
@@ -98,6 +100,7 @@ class DirectLauncherScreenState(
         }
     }
 
+    @OptIn(ExperimentalPathApi::class)
     fun userInputLaunchVanilla() {
         if (launchingVanilla)
             return
@@ -120,7 +123,7 @@ class DirectLauncherScreenState(
                 }
                 val ue4ssDir = jFile("$gameFileDir\\ue4ss")
                 if (ue4ssDir.isDirectory) {
-                    if (!ue4ssDir.deleteRecursively()) {
+                    if (!ue4ssDir.toPath().deleteRecursivelyBool()) {
                         notLaunchedErrMessage = "Could not delete ${gameFileDir.name}\\ue4ss directory recursively"
                         return@withContext
                     }
@@ -129,7 +132,7 @@ class DirectLauncherScreenState(
                 val (unrealGameRoot, gameRoot) = resolveGameRoot(gameFile)
                 val pakModsDir = jFile("$gameRoot\\Content\\Paks\\~mods")
                 if (pakModsDir.exists()) {
-                    if (!pakModsDir.deleteRecursively()) {
+                    if (!pakModsDir.toPath().deleteRecursivelyBool()) {
                         notLaunchedErrMessage = "Could not delete ${jFile(gameRoot).name}\\Content\\Paks\\~mods directory recursively"
                         return@withContext
                     }

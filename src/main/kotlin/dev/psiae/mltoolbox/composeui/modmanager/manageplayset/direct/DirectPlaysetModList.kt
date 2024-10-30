@@ -32,8 +32,8 @@ import dev.psiae.mltoolbox.composeui.HeightSpacer
 import dev.psiae.mltoolbox.composeui.WidthSpacer
 import dev.psiae.mltoolbox.composeui.core.ComposeUIContext
 import dev.psiae.mltoolbox.composeui.core.locals.LocalComposeUIContext
-import dev.psiae.mltoolbox.composeui.modmanager.DirectInstalledModData
 import dev.psiae.mltoolbox.composeui.modmanager.SimpleTooltip
+import dev.psiae.mltoolbox.composeui.modmanager.managemods.direct.DirectInstalledModData
 import dev.psiae.mltoolbox.composeui.theme.md3.LocalIsDarkTheme
 import dev.psiae.mltoolbox.composeui.theme.md3.Material3Theme
 import dev.psiae.mltoolbox.composeui.theme.md3.currentLocalAbsoluteOnSurfaceColor

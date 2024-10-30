@@ -5,6 +5,7 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.window.AwtWindow
 import androidx.compose.ui.window.application
+import com.sun.nio.file.ExtendedOpenOption
 import dev.psiae.mltoolbox.app.MLToolBoxApp
 import dev.psiae.mltoolbox.java.jFile
 import dev.psiae.mltoolbox.ui.MainImmediateUIDispatcher
@@ -18,8 +19,11 @@ import java.awt.event.ActionEvent
 import java.awt.event.KeyEvent
 import java.awt.event.WindowEvent
 import java.awt.event.WindowListener
-import java.io.RandomAccessFile
 import java.nio.ByteBuffer
+import java.nio.channels.FileChannel
+import java.nio.file.FileSystemException
+import java.nio.file.OpenOption
+import java.nio.file.StandardOpenOption
 import javax.swing.*
 import kotlin.system.exitProcess
 import kotlin.time.Duration.Companion.minutes
@@ -231,19 +235,36 @@ private fun acquireProcessFileLock() = runCatching {
                 runCatching {
                     jFile("mltoolboxapp").mkdir()
                     val processLockFile = jFile("mltoolboxapp\\process.lock")
-                    val ra = RandomAccessFile(processLockFile, "rw")
-                    ra.channel.tryLock()
-                        ?: run {
-                            processLockJob.complete(false)
-                            DefaultSimpleErrorWindow("Application is already running")
-                            exitProcess(0)
+                    val processLockFileNioPath = processLockFile.toPath()
+                    val fileChannel = runCatching {
+                        FileChannel
+                            .open(
+                                processLockFileNioPath,
+                                StandardOpenOption.CREATE,
+                                StandardOpenOption.WRITE,
+                                ExtendedOpenOption.NOSHARE_READ,
+                                ExtendedOpenOption.NOSHARE_WRITE,
+                                ExtendedOpenOption.NOSHARE_DELETE
+                            )
+                    }.fold(
+                        onSuccess = { it },
+                        onFailure = { e ->
+                            when (e) {
+                                is FileSystemException -> {
+                                    processLockJob.complete(false)
+                                    DefaultSimpleErrorWindow("Application is already running")
+                                    exitProcess(0)
+                                }
+                            }
+                            throw e
                         }
+                    )
                     processLockJob.complete(true)
                     // somebody please explain to me why tf it won't stay locked without these ?
                     // compiler ???
                     while (true) {
                         delay(Int.MAX_VALUE.toLong())
-                        ra.channel.read(ByteBuffer.wrap(byteArrayOf()))
+                        fileChannel.read(ByteBuffer.wrap(byteArrayOf()))
                     }
                 }.onFailure { ex ->
                     runCatching { processLockJob.complete(false) }
@@ -258,7 +279,7 @@ private fun acquireProcessFileLock() = runCatching {
                 if (!locked) {
                     runCatching {
                         delay(1.minutes.inWholeMilliseconds)
-                        DefaultSimpleErrorWindow("Timeout waiting for process.lock failure to exit, this is bug if there is no other app process")
+                        DefaultSimpleErrorWindow("Timeout waiting for process.lock failure to exit, this is a bug if there is no other app process already running")
                     }
                     exitProcess(0)
                 }

@@ -75,8 +75,6 @@ class ModManagerScreenState(
     var refreshDashboardWorker: Job? = null
         private set
 
-    var installedModListState by mutableStateOf<InstalledModListState?>(null)
-
     var currentDrawerDestination by mutableStateOf("dashboard")
 
 
@@ -196,7 +194,6 @@ class ModManagerScreenState(
                 try { cancelAndJoin() } catch (_: CancellationException) {}
             }
             inputCheckUE4SSInstalled()
-            installedModListState?.refreshSuspend()
             checkingUE4SSInstallation = false
         }
     }

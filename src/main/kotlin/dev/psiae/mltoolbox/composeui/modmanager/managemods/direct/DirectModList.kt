@@ -33,8 +33,6 @@ import dev.psiae.mltoolbox.composeui.HeightSpacer
 import dev.psiae.mltoolbox.composeui.WidthSpacer
 import dev.psiae.mltoolbox.composeui.core.ComposeUIContext
 import dev.psiae.mltoolbox.composeui.core.locals.LocalComposeUIContext
-import dev.psiae.mltoolbox.composeui.modmanager.DirectInstalledModData
-import dev.psiae.mltoolbox.composeui.modmanager.SimpleTooltip
 import dev.psiae.mltoolbox.composeui.theme.md3.LocalIsDarkTheme
 import dev.psiae.mltoolbox.composeui.theme.md3.Material3Theme
 import dev.psiae.mltoolbox.composeui.theme.md3.currentLocalAbsoluteOnSurfaceColor
@@ -769,5 +767,31 @@ private class DirectModListState(
                 queryParamsEnabled = false
             }
         }
+    }
+}
+
+class DirectInstalledModData(
+    val isUE4SS: Boolean,
+    val isUnrealPak: Boolean,
+    val name: String,
+    val enabled: Boolean,
+    val qualifiedNameType: String,
+    // e.g. dev.psiae.manorlordsmods.mlconsolecommands
+    val qualifiedName: String,
+    val resolvedTypeTags: List<String>,
+) {
+    val uniqueQualifiedName = qualifiedNameType + "_" + qualifiedName
+}
+
+class DirectInstalledModFilterParams(
+    val isU4SS: Boolean? = null,
+    val isPak: Boolean? = null,
+    val isBuiltIn: Boolean? = null,
+    val hasUE4SSLua: Boolean? = null,
+    val hasUE4SSCPP: Boolean? = null,
+) {
+
+    fun anyNonNullPropertyValue(): Boolean {
+        return isU4SS != null || isPak != null || isBuiltIn != null || hasUE4SSLua != null || hasUE4SSCPP != null
     }
 }

@@ -4,6 +4,7 @@ import androidx.compose.runtime.*
 import com.github.junrar.Junrar
 import com.github.junrar.exception.RarException
 import com.github.junrar.exception.UnsupportedRarV5Exception
+import com.sun.nio.file.ExtendedOpenOption
 import dev.psiae.mltoolbox.composeui.core.ComposeUIContext
 import dev.psiae.mltoolbox.composeui.core.locals.LocalComposeUIContext
 import dev.psiae.mltoolbox.java.jFile
@@ -23,6 +24,12 @@ import net.sf.sevenzipjbinding.impl.RandomAccessFileOutStream
 import java.io.FileNotFoundException
 import java.io.IOException
 import java.io.RandomAccessFile
+import java.nio.channels.FileChannel
+import java.nio.file.DirectoryNotEmptyException
+import java.nio.file.LinkOption
+import java.nio.file.StandardOpenOption
+import java.util.Comparator
+import kotlin.io.path.*
 
 @Composable
 fun rememberDirectInstallUE4SSModScreenState(
@@ -135,6 +142,7 @@ class DirectInstallUE4SSModScreenState(
         }
     }
 
+    @OptIn(ExperimentalPathApi::class)
     private suspend fun processSelectedModsArchive(mods: List<jFile>): Boolean {
         isLoading = true
         isLastSelectedArchiveInvalid = false
@@ -150,28 +158,30 @@ class DirectInstallUE4SSModScreenState(
             run {
                 var lockedFile: jFile? = null
                 if (installDir.exists() && !run {
-                        var open = true
-                        open = installDir.walkBottomUp().all { f ->
-                            if (f.isFile) {
-                                if (f.canWrite()) {
-                                    var ch: RandomAccessFile? = null
-                                    try {
-                                        ch = RandomAccessFile(f, "rw")
-                                        ch.channel.lock()
-                                    } catch (ex: IOException) {
-                                        open = false
-                                        lockedFile = f
-                                    } finally {
-                                        ch?.close()
-                                    }
-                                } else {
-                                    // TODO
-                                }
+                    var open = true
+                    open = installDir.toPath().walk(PathWalkOption.INCLUDE_DIRECTORIES).all { f ->
+                        if (f.isRegularFile(LinkOption.NOFOLLOW_LINKS)) {
+                            var ch: FileChannel? = null
+                            try {
+                                ch = FileChannel.open(
+                                    f,
+                                    if (f.isWritable()) StandardOpenOption.WRITE else StandardOpenOption.READ,
+                                    StandardOpenOption.READ,
+                                    ExtendedOpenOption.NOSHARE_READ,
+                                    ExtendedOpenOption.NOSHARE_WRITE,
+                                    ExtendedOpenOption.NOSHARE_DELETE
+                                )
+                            } catch (ex: IOException) {
+                                open = false
+                                lockedFile = f.toFile()
+                            } finally {
+                                ch?.close()
                             }
-                            open
                         }
                         open
-                    }) {
+                    }
+                    open
+                }) {
                     isLoading = false
                     isInvalidModsDirectory = true
                     statusMessage = "unable to lock ue4ss_mods_install directory from app directory, ${lockedFile?.let {
@@ -182,18 +192,28 @@ class DirectInstallUE4SSModScreenState(
                     return@withContext
                 }
             }
-            if (installDir.exists()) installDir.walkBottomUp().forEach { f ->
-                if (!f.delete()) {
-                    isLoading = false
-                    isInvalidModsDirectory = true
-                    statusMessage = "unable to delete ${f.let {
-                        it.absolutePath
-                            .drop(it.absolutePath.indexOf(userDir.absolutePath)+userDir.absolutePath.length)
-                            .replace(' ', '\u00A0')
-                    }} from app directory, it might be opened in another process"
-                    return@withContext
-                }
-            }
+
+            if (installDir.exists())
+                installDir.toPath()
+                    .walk(PathWalkOption.INCLUDE_DIRECTORIES)
+                    .sortedWith(Comparator.reverseOrder())
+                    .forEach { f ->
+                        runCatching { f.deleteExisting() }
+                            .onFailure { e ->
+                                when (e) {
+                                    is NoSuchFileException, is DirectoryNotEmptyException, is IOException -> {
+                                        isLoading = false
+                                        isInvalidModsDirectory = true
+                                        statusMessage = "unable to delete ${f.toFile().let {
+                                            it.absolutePath
+                                                .drop(it.absolutePath.indexOf(userDir.absolutePath)+userDir.absolutePath.length)
+                                                .replace(' ', '\u00A0')
+                                        }} from app directory, it might be opened in another process"
+                                        return@withContext
+                                    }
+                                }
+                            }
+                    }
 
             statusMessage = "extracting ..."
             mods.forEach { file ->
@@ -354,7 +374,6 @@ class DirectInstallUE4SSModScreenState(
                 return@withContext
             }
 
-
             statusMessage = "verifying target game dir ..."
             val gameDir = gameBinaryFile?.parentFile
             if (gameDir == null || !gameDir.exists()) {
@@ -399,31 +418,33 @@ class DirectInstallUE4SSModScreenState(
 
             var lockedFile: jFile? = null
             if (!run {
-                    var open = true
-                    open = directoriesToOverwrite.all { dir ->
-                        var dirOpen = true
-                        dir.walkBottomUp().forEach { f ->
-                            if (f.isFile) {
-                                if (f.canWrite()) {
-                                    var ch: RandomAccessFile? = null
-                                    try {
-                                        ch = RandomAccessFile(f, "rw")
-                                        ch!!.channel.lock()
-                                    } catch (ex: IOException) {
-                                        lockedFile = f
-                                        dirOpen = false
-                                    } finally {
-                                        ch?.close()
-                                    }
-                                } else {
-                                    // TODO
-                                }
+                var open = true
+                open = directoriesToOverwrite.all { dir ->
+                    var dirOpen = true
+                    dir.toPath().walk(PathWalkOption.INCLUDE_DIRECTORIES).forEach { f ->
+                        if (f.isRegularFile(LinkOption.NOFOLLOW_LINKS)) {
+                            var ch: FileChannel? = null
+                            try {
+                                ch = FileChannel.open(
+                                    f,
+                                    if (f.isWritable()) StandardOpenOption.WRITE else StandardOpenOption.READ,
+                                    StandardOpenOption.READ,
+                                    ExtendedOpenOption.NOSHARE_READ,
+                                    ExtendedOpenOption.NOSHARE_WRITE,
+                                    ExtendedOpenOption.NOSHARE_DELETE
+                                )
+                            } catch (ex: IOException) {
+                                lockedFile = f.toFile()
+                                dirOpen = false
+                            } finally {
+                                ch?.close()
                             }
                         }
-                        dirOpen
                     }
-                    open
-                }) {
+                    dirOpen
+                }
+                open
+            }) {
                 isLoading = false
                 isInvalidModsDirectory = true
                 statusMessage = "unable to lock ${lockedFile!!.let {
@@ -437,24 +458,35 @@ class DirectInstallUE4SSModScreenState(
             statusMessage = "preparing target game Mods dir ..."
 
             directoriesToOverwrite.forEach { dir ->
-                dir.walkBottomUp().forEach { f ->
-                    if (!f.delete()) {
-                        isLoading = false
-                        isInvalidModsDirectory = true
-                        statusMessage = "unable to delete ${f.let {
-                            it.absolutePath
-                                .drop(it.absolutePath.indexOf(gameDir.absolutePath)+gameDir.absolutePath.length)
-                                .replace(' ', '\u00A0')
-                        }} from game directory, it might be opened in another process"
-                        return@withContext
+                dir.toPath()
+                    .walk(PathWalkOption.INCLUDE_DIRECTORIES)
+                    .sortedWith(Comparator.reverseOrder())
+                    .forEach { f ->
+                        runCatching { f.deleteExisting() }
+                            .onFailure { e ->
+                                when (e) {
+                                    is NoSuchFileException, is DirectoryNotEmptyException, is IOException -> {
+                                        isLoading = false
+                                        isInvalidModsDirectory = true
+                                        statusMessage = "unable to delete ${f.toFile().let {
+                                            it.absolutePath
+                                                .drop(it.absolutePath.indexOf(gameDir.absolutePath)+gameDir.absolutePath.length)
+                                                .replace(' ', '\u00A0')
+                                        }} from game directory, it might be opened in another process"
+                                    }
+                                }
+                            }
                     }
-                }
             }
 
             statusMessage = "installing ..."
             runCatching {
                 listModsToBeInstalledDir.forEach {
-                    it.copyRecursively(jFile("$modsDir\\${it.name}"), true)
+                    it.toPath().copyToRecursively(
+                        target = jFile("$modsDir\\${it.name}").toPath(),
+                        followLinks = false,
+                        overwrite = true
+                    )
                 }
             }.onFailure { ex ->
                 isLoading = false
