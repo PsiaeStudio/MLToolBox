@@ -4,11 +4,17 @@ This project is in no way affiliated with or endorsed by "Manor Lords" developer
 For formal inquiries, contact me at any of the following emails: psiae.li@gmail.com psiae.li@outlook.com
 
 ```
-  This Work is licensed under "Apache License 2.0"
+Copyright 2024 Psiae
 
-  The Work including Contribution from Contributors is provided on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND.
+This Work is Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this work except in compliance with the License.
 
-  a copy of the license can be found in the LICENSE file in the repository containing this disclaimer
+A copy of the License can be found in the LICENSE file in the repository containing this disclaimer
+or at the following site:
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+The Work including Contribution from Contributors is provided on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND.
 ```
 
 #
