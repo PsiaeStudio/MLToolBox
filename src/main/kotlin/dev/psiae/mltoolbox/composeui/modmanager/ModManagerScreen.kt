@@ -3,11 +3,11 @@ package dev.psiae.mltoolbox.composeui.modmanager
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.*
-import androidx.compose.foundation.interaction.*
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ripple.LocalRippleTheme
-import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -33,6 +33,8 @@ import dev.psiae.mltoolbox.composeui.LocalApplication
 import dev.psiae.mltoolbox.composeui.NoOpPainter
 import dev.psiae.mltoolbox.composeui.WidthSpacer
 import dev.psiae.mltoolbox.composeui.gestures.defaultSurfaceGestureModifiers
+import dev.psiae.mltoolbox.composeui.md3.requireCurrent
+import dev.psiae.mltoolbox.composeui.md3.rippleAlphaOrDefault
 import dev.psiae.mltoolbox.composeui.modmanager.browse.BrowseScreen
 import dev.psiae.mltoolbox.composeui.modmanager.launcher.LauncherScreen
 import dev.psiae.mltoolbox.composeui.modmanager.managemods.ManageModsScreen
@@ -59,7 +61,7 @@ fun ModManagerMainScreen() {
             .defaultSurfaceGestureModifiers()
     ) {
         CompositionLocalProvider(
-            LocalIndication provides rememberRipple(),
+            LocalIndication provides ripple(),
         ) {
             if (!modManagerScreen.hasGameWorkingDirectory) {
                 SelectGameWorkingDirectoryScreen(modManagerScreen)
@@ -566,6 +568,7 @@ private fun NavigationDrawer(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun NavigationDrawerItemUI(
     isSelected: Boolean,
@@ -582,10 +585,10 @@ private fun NavigationDrawerItemUI(
             .clip(RoundedCornerShape(50.dp))
             .clickable(enabled = enabled, indication = null, interactionSource = ins, onClick = onClick)
             .composed {
-                val rippleTheme = LocalRippleTheme.current
+                val rippleTheme = LocalRippleConfiguration.requireCurrent()
                 if (ins.collectIsHoveredAsState().value) {
                     Modifier
-                        .background(color = rippleTheme.defaultColor().copy(alpha = rippleTheme.rippleAlpha().hoveredAlpha))
+                        .background(color = rippleTheme.color.copy(alpha = rippleTheme.rippleAlphaOrDefault().hoveredAlpha))
                 } else {
                     Modifier
                 }

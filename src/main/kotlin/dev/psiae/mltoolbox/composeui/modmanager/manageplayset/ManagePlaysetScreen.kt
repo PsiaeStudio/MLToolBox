@@ -6,8 +6,9 @@ import androidx.compose.foundation.interaction.collectIsDraggedAsState
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.ripple.LocalRippleTheme
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalRippleConfiguration
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
@@ -30,6 +31,8 @@ import dev.psiae.mltoolbox.composeui.HeightSpacer
 import dev.psiae.mltoolbox.composeui.NoOpPainter
 import dev.psiae.mltoolbox.composeui.WidthSpacer
 import dev.psiae.mltoolbox.composeui.gestures.defaultSurfaceGestureModifiers
+import dev.psiae.mltoolbox.composeui.md3.requireCurrent
+import dev.psiae.mltoolbox.composeui.md3.rippleAlphaOrDefault
 import dev.psiae.mltoolbox.composeui.modmanager.ModManagerScreenState
 import dev.psiae.mltoolbox.composeui.modmanager.SimpleTooltip
 import dev.psiae.mltoolbox.composeui.modmanager.WIPScreen
@@ -173,6 +176,7 @@ private fun TopNavigation(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun TopNavigationItemUI(
     displayName: String,
@@ -192,10 +196,10 @@ private fun TopNavigationItemUI(
             .clip(RoundedCornerShape(24.dp))
             .clickable(enabled = enabled, indication = null, interactionSource = ins, onClick = onClick)
             .composed {
-                val rippleTheme = LocalRippleTheme.current
+                val rippleTheme = LocalRippleConfiguration.requireCurrent()
                 if (ins.collectIsHoveredAsState().value) {
                     Modifier
-                        .background(color = rippleTheme.defaultColor().copy(alpha = rippleTheme.rippleAlpha().hoveredAlpha))
+                        .background(color = rippleTheme.color.copy(alpha = rippleTheme.rippleAlphaOrDefault().hoveredAlpha))
                 } else {
                     Modifier
                 }

@@ -16,6 +16,8 @@
 -keep class kotlinx.** {*;}
 -keep class java.** {*;}
 
+-keep class net.sf.sevenzipjbinding.** {*;}
+
 #keep runtime annotation for JNA
 -keepattributes RuntimeVisibleAnnotations
 

@@ -3,11 +3,7 @@ package dev.psiae.mltoolbox.composeui.modmanager.managemods.direct
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.ripple.rememberRipple
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -17,7 +13,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.BaselineShift
 import androidx.compose.ui.unit.dp
 import dev.psiae.mltoolbox.composeui.HeightSpacer
@@ -48,7 +43,7 @@ fun DirectInstallModScreen(
             val scrollState = rememberScrollState()
             val topBarScrolling by remember { derivedStateOf { scrollState.value > 0 } }
             CompositionLocalProvider(
-                LocalIndication provides rememberRipple(),
+                LocalIndication provides ripple(),
             ) {
                 Column(
                     modifier = Modifier

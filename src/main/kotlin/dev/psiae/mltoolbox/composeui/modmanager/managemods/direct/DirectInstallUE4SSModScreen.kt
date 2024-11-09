@@ -5,7 +5,6 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -54,7 +53,7 @@ fun DirectInstallUE4SSModScreen(
         val scrollState = rememberScrollState()
         val topBarScrolling by remember { derivedStateOf { scrollState.value > 0 } }
         CompositionLocalProvider(
-            LocalIndication provides rememberRipple(),
+            LocalIndication provides ripple(),
         ) {
             Column(
                 modifier = Modifier

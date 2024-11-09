@@ -2,41 +2,27 @@ package dev.psiae.mltoolbox.composeui.supportproject
 
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import coil3.compose.rememberAsyncImagePainter
-import dev.dexsr.gmod.palworld.toolbox.savegame.composeui.libint.DragData
-import dev.dexsr.gmod.palworld.toolbox.savegame.composeui.libint.onExternalDrag
 import dev.psiae.mltoolbox.composeui.HeightSpacer
-import dev.psiae.mltoolbox.composeui.LocalAwtWindow
 import dev.psiae.mltoolbox.composeui.gestures.defaultSurfaceGestureModifiers
-import dev.psiae.mltoolbox.composeui.modmanager.SimpleTooltip
 import dev.psiae.mltoolbox.composeui.theme.md3.LocalIsDarkTheme
 import dev.psiae.mltoolbox.composeui.theme.md3.Material3Theme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import java.net.URI
 
 
 @Composable
@@ -48,7 +34,7 @@ fun DonateMainScreen() {
             .defaultSurfaceGestureModifiers()
     ) {
         CompositionLocalProvider(
-            LocalIndication provides rememberRipple(),
+            LocalIndication provides ripple(),
         ) {
             Row(
                 modifier = Modifier.align(Alignment.Center),

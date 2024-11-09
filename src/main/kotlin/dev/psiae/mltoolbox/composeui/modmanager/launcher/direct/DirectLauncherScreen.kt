@@ -6,7 +6,6 @@ import androidx.compose.foundation.interaction.collectIsDraggedAsState
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.ripple.LocalRippleTheme
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -30,6 +29,8 @@ import dev.psiae.mltoolbox.composeui.HeightSpacer
 import dev.psiae.mltoolbox.composeui.NoOpPainter
 import dev.psiae.mltoolbox.composeui.WidthSpacer
 import dev.psiae.mltoolbox.composeui.gestures.defaultSurfaceGestureModifiers
+import dev.psiae.mltoolbox.composeui.md3.requireCurrent
+import dev.psiae.mltoolbox.composeui.md3.rippleAlphaOrDefault
 import dev.psiae.mltoolbox.composeui.modmanager.SimpleTooltip
 import dev.psiae.mltoolbox.composeui.modmanager.WIPScreen
 import dev.psiae.mltoolbox.composeui.modmanager.launcher.LauncherScreenState
@@ -335,6 +336,7 @@ private fun ModeNavigation(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ModeNavigationItemUI(
     displayName: String,
@@ -354,10 +356,10 @@ private fun ModeNavigationItemUI(
             .clip(RoundedCornerShape(12.dp))
             .clickable(enabled = enabled, indication = null, interactionSource = ins, onClick = onClick)
             .composed {
-                val rippleTheme = LocalRippleTheme.current
+                val rippleTheme = LocalRippleConfiguration.requireCurrent()
                 if (ins.collectIsHoveredAsState().value) {
                     Modifier
-                        .background(color = rippleTheme.defaultColor().copy(alpha = rippleTheme.rippleAlpha().hoveredAlpha))
+                        .background(color = rippleTheme.color.copy(alpha = rippleTheme.rippleAlphaOrDefault().hoveredAlpha))
                 } else {
                     Modifier
                 }

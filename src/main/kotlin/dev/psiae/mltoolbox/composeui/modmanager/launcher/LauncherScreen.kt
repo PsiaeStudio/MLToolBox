@@ -6,8 +6,9 @@ import androidx.compose.foundation.interaction.collectIsDraggedAsState
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.ripple.LocalRippleTheme
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalRippleConfiguration
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
@@ -22,9 +23,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.BaselineShift
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
@@ -32,18 +31,15 @@ import dev.psiae.mltoolbox.composeui.HeightSpacer
 import dev.psiae.mltoolbox.composeui.NoOpPainter
 import dev.psiae.mltoolbox.composeui.WidthSpacer
 import dev.psiae.mltoolbox.composeui.gestures.defaultSurfaceGestureModifiers
+import dev.psiae.mltoolbox.composeui.md3.requireCurrent
+import dev.psiae.mltoolbox.composeui.md3.rippleAlphaOrDefault
 import dev.psiae.mltoolbox.composeui.modmanager.ModManagerScreenState
 import dev.psiae.mltoolbox.composeui.modmanager.SimpleTooltip
 import dev.psiae.mltoolbox.composeui.modmanager.launcher.contained.ContainedLauncherScreen
 import dev.psiae.mltoolbox.composeui.modmanager.launcher.direct.DirectLauncherScreen
-import dev.psiae.mltoolbox.composeui.modmanager.manageplayset.ManagePlaysetScreenState
-import dev.psiae.mltoolbox.composeui.theme.md3.LocalIsDarkTheme
 import dev.psiae.mltoolbox.composeui.theme.md3.Material3Theme
 import dev.psiae.mltoolbox.composeui.theme.md3.currentLocalAbsoluteOnSurfaceColor
-import dev.psiae.mltoolbox.uifoundation.themes.md3.MD3Spec
 import dev.psiae.mltoolbox.uifoundation.themes.md3.MD3Theme
-import dev.psiae.mltoolbox.uifoundation.themes.md3.incrementsDp
-import dev.psiae.mltoolbox.uifoundation.themes.md3.padding
 
 @Composable
 fun LauncherScreen(
@@ -176,6 +172,7 @@ private fun TopNavigation(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun TopNavigationItemUI(
     displayName: String,
@@ -195,10 +192,10 @@ private fun TopNavigationItemUI(
             .clip(RoundedCornerShape(24.dp))
             .clickable(enabled = enabled, indication = null, interactionSource = ins, onClick = onClick)
             .composed {
-                val rippleTheme = LocalRippleTheme.current
+                val rippleTheme = LocalRippleConfiguration.requireCurrent()
                 if (ins.collectIsHoveredAsState().value) {
                     Modifier
-                        .background(color = rippleTheme.defaultColor().copy(alpha = rippleTheme.rippleAlpha().hoveredAlpha))
+                        .background(color = rippleTheme.color.copy(alpha = rippleTheme.rippleAlphaOrDefault().hoveredAlpha))
                 } else {
                     Modifier
                 }

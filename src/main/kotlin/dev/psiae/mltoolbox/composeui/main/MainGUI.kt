@@ -36,6 +36,7 @@ fun MainGUI(
     prepareStdKtx()
     prepareUIFoundation()
     acquireProcessFileLock()
+    prepareNativeLibs()
 
     application {
         // we should already be in Swing EQ
@@ -161,15 +162,12 @@ fun querySystemOSBuildVersionStr(): String {
 
 // TODO: FancyExceptionWindow, default as fallback
 
-private val DefaultExceptionWindow = { errorMsg: String, throwable: Throwable ->
+val DefaultExceptionWindow = { errorMsg: String, throwable: Throwable ->
     JOptionPane.showMessageDialog(JFrame().apply { size = Dimension(300, 300) },
         JTextArea()
             .apply {
                 val renderText = try {
-                    var lines = 0
-                    throwable.stackTraceToString().takeWhile { char ->
-                        !(char == '\n' && lines++ == 12)
-                    }
+                    throwable.stackTraceToString()
                 } catch (t: Throwable) {
                     try {
                         throwable.toString()
@@ -217,7 +215,7 @@ private val DefaultExceptionWindow = { errorMsg: String, throwable: Throwable ->
                 getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(copyKeyStroke, "copy")
                 getActionMap().put("copy", object : AbstractAction() {
                     override fun actionPerformed(e: ActionEvent) {
-                        val selection = StringSelection(renderText)
+                        val selection = StringSelection(text)
                         Toolkit.getDefaultToolkit().systemClipboard.setContents(selection, selection)
                     }
                 })
@@ -369,5 +367,12 @@ private fun acquireProcessFileLock() = runCatching {
     }
 }.onFailure { ex ->
     DefaultExceptionWindow("fail to processLock", ex)
+    exitProcess(0)
+}
+
+private fun prepareNativeLibs() = runCatching {
+    NativeLibsInitializer.init()
+}.onFailure { e ->
+    DefaultExceptionWindow("fail to prepareNativeLibs", e)
     exitProcess(0)
 }

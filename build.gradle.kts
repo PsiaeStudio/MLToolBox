@@ -1,4 +1,5 @@
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
+import org.jetbrains.compose.desktop.application.tasks.AbstractJPackageTask
 
 plugins {
     kotlin("jvm")
@@ -7,7 +8,7 @@ plugins {
 }
 
 group = "dev.psiae"
-version = "v1.0.0-alpha04"
+version = "v1.0.0-alpha06"
 
 repositories {
     mavenCentral()
@@ -16,7 +17,15 @@ repositories {
 }
 
 kotlin {
-    jvmToolchain(17)
+    jvmToolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
 }
 
 dependencies {
@@ -24,6 +33,8 @@ dependencies {
     // compose.desktop.currentOs should be used in launcher-sourceSet
     // (in a separate module for demo project and in testMain).
     // With compose.desktop.common you will also lose @Preview functionality
+    implementation(compose.material)
+    implementation(compose.material3)
     implementation(compose.desktop.currentOs)
 
     implementation("net.java.dev.jna:jna:5.13.0")
@@ -53,14 +64,17 @@ compose.desktop {
             targetFormats(TargetFormat.Msi)
             packageName = "MLToolBox"
             packageVersion = "1.0.0"
+            copyright = "Copyright (C) 2024 Psiae"
+            licenseFile.set(project.file("LICENSE"))
 
             modules("jdk.unsupported")
 
             windows {
                 iconFile.set(project.file("src/main/resources/drawable/icon_manorlords_logo_text.ico"))
             }
-        }
 
+            appResourcesRootDir.set(project.layout.projectDirectory.dir("resources"))
+        }
 
         buildTypes.release.proguard {
 
@@ -71,7 +85,21 @@ compose.desktop {
             joinOutputJars.set(true)
         }
     }
-    dependencies {
-        implementation(compose.material3)
+}
+
+afterEvaluate {
+    tasks.withType<AbstractJPackageTask>().forEach { task ->
+        if (
+            task.name.startsWith("create") &&
+            task.name.endsWith("Distributable")
+        ) {
+            task.doLast {
+                project.layout.projectDirectory.dir("resources").dir("common").file("LICENSE.txt").asFile
+                    .copyTo(
+                        target = task.destinationDir.get().dir(task.packageName.get()).file("LICENSE.txt").asFile,
+                        overwrite = true
+                    )
+            }
+        }
     }
 }

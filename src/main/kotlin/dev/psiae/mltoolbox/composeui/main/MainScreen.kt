@@ -2,16 +2,19 @@ package dev.psiae.mltoolbox.composeui.main
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.*
-import androidx.compose.foundation.interaction.*
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsDraggedAsState
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Icon
 import androidx.compose.material.Text
-import androidx.compose.material.ripple.LocalRippleTheme
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.LocalRippleConfiguration
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.BiasAlignment
@@ -19,7 +22,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.Layout
@@ -31,10 +33,12 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.*
 import androidx.compose.ui.util.fastFirst
-import androidx.compose.ui.util.fastForEach
 import androidx.compose.ui.util.fastForEachIndexed
+import dev.psiae.mltoolbox.app.MLToolBoxApp
 import dev.psiae.mltoolbox.composeui.*
 import dev.psiae.mltoolbox.composeui.gestures.defaultSurfaceGestureModifiers
+import dev.psiae.mltoolbox.composeui.md3.requireCurrent
+import dev.psiae.mltoolbox.composeui.md3.rippleAlphaOrDefault
 import dev.psiae.mltoolbox.composeui.modmanager.modManagerMainScreenDrawerItem
 import dev.psiae.mltoolbox.composeui.supportproject.supportProjectMainScreenDrawerItem
 import dev.psiae.mltoolbox.composeui.text.nonScaledFontSize
@@ -349,7 +353,7 @@ fun MainScreenLayoutBody() {
                 ) {
                     Text(
                         modifier = Modifier.align(Alignment.Center),
-                        text = "v1.0.0-alpha05",
+                        text = MLToolBoxApp.RELEASE_VERSION,
                         style = Material3Theme.typography.bodySmall,
                         color = Material3Theme.colorScheme.onSurface,
                         maxLines = 1
@@ -419,6 +423,7 @@ fun MainScreenLayoutDrawerNavigationPanel(
 
 
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun DrawerNavigationPanelItem(
     modifier: Modifier,
@@ -456,10 +461,10 @@ private fun DrawerNavigationPanelItem(
                     .defaultMinSize(minWidth = 56.dp, minHeight = 32.dp)
                     .clip(RoundedCornerShape(50))
                     .composed {
-                        val rippleTheme = LocalRippleTheme.current
+                        val rippleTheme = LocalRippleConfiguration.requireCurrent()
                         if (isHovered) {
                             Modifier
-                                .background(color = rippleTheme.defaultColor().copy(alpha = rippleTheme.rippleAlpha().hoveredAlpha))
+                                .background(color = rippleTheme.color.copy(alpha = rippleTheme.rippleAlphaOrDefault().hoveredAlpha))
                         } else {
                             Modifier
                         }
@@ -505,10 +510,10 @@ private fun DrawerNavigationPanelItem(
                     .defaultMinSize(minWidth = 80.dp, minHeight = 46.dp)
                     .clip(RoundedCornerShape(50))
                     .composed {
-                        val rippleTheme = LocalRippleTheme.current
+                        val rippleTheme = LocalRippleConfiguration.requireCurrent()
                         if (isHovered) {
                             Modifier
-                                .background(color = rippleTheme.defaultColor().copy(alpha = rippleTheme.rippleAlpha().hoveredAlpha))
+                                .background(color = rippleTheme.color.copy(alpha = rippleTheme.rippleAlphaOrDefault().hoveredAlpha))
                         } else {
                             Modifier
                         }

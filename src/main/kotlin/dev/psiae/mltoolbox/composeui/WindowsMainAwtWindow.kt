@@ -1,13 +1,9 @@
 package dev.psiae.mltoolbox.composeui
 
-import androidx.compose.material.ripple.LocalRippleTheme
-import androidx.compose.material.ripple.RippleAlpha
-import androidx.compose.material.ripple.RippleTheme
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.awt.ComposePanel
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toAwtImage
 import androidx.compose.ui.res.loadImageBitmap
 import androidx.compose.ui.window.ApplicationScope
@@ -170,26 +166,15 @@ private fun ProvideApplicationCompositionLocals(
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ProvideBasePlatformCoreUICompositionLocals(
     content: @Composable () -> Unit
 ) {
     CompositionLocalProvider(
-        LocalRippleTheme provides run {
-            remember { object : RippleTheme {
-                @Composable
-                override fun defaultColor(): Color = RippleTheme.defaultRippleColor(
-                    contentColor = Color.Black,
-                    lightTheme = true
-                )
-
-                @Composable
-                override fun rippleAlpha(): RippleAlpha = RippleTheme.defaultRippleAlpha(
-                    contentColor = Color.Black,
-                    lightTheme = true
-                )
-            } }
-        },
+        LocalRippleConfiguration provides RippleConfiguration(
+            color = LocalContentColor.current
+        ),
         content
     )
 }

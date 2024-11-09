@@ -3,14 +3,16 @@ package dev.psiae.mltoolbox.composeui.modmanager.browse
 import androidx.compose.foundation.*
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsDraggedAsState
-import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.ripple.LocalRippleTheme
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalRippleConfiguration
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
@@ -28,6 +30,8 @@ import dev.psiae.mltoolbox.composeui.HeightSpacer
 import dev.psiae.mltoolbox.composeui.NoOpPainter
 import dev.psiae.mltoolbox.composeui.WidthSpacer
 import dev.psiae.mltoolbox.composeui.gestures.defaultSurfaceGestureModifiers
+import dev.psiae.mltoolbox.composeui.md3.requireCurrent
+import dev.psiae.mltoolbox.composeui.md3.rippleAlphaOrDefault
 import dev.psiae.mltoolbox.composeui.modmanager.ModManagerScreenState
 import dev.psiae.mltoolbox.composeui.modmanager.WIPScreen
 import dev.psiae.mltoolbox.composeui.theme.md3.Material3Theme
@@ -146,6 +150,7 @@ private fun TopNavigation(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun TopNavigationItemUI(
     displayName: String,
@@ -165,10 +170,10 @@ private fun TopNavigationItemUI(
             .clickable(enabled = enabled, onClick = onClick)
             .clickable(enabled = enabled, indication = null, interactionSource = ins, onClick = onClick)
             .composed {
-                val rippleTheme = LocalRippleTheme.current
+                val rippleTheme = LocalRippleConfiguration.requireCurrent()
                 if (ins.collectIsHoveredAsState().value) {
                     Modifier
-                        .background(color = rippleTheme.defaultColor().copy(alpha = rippleTheme.rippleAlpha().hoveredAlpha))
+                        .background(color = rippleTheme.color.copy(alpha = rippleTheme.rippleAlphaOrDefault().hoveredAlpha))
                 } else {
                     Modifier
                 }

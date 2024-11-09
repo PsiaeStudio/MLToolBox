@@ -10,6 +10,8 @@ class MLToolBoxApp {
     companion object {
         private val INSTANCE = LazyConstructor<MLToolBoxApp>()
 
+        const val RELEASE_VERSION = "v1.0.0-alpha06"
+
         fun construct() = INSTANCE.constructOrThrow(
             lazyValue = { MLToolBoxApp() },
             lazyThrow = { error("MLToolBoxApp already initialized") }
