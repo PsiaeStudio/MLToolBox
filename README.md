@@ -1,5 +1,7 @@
 ## Disclaimer
-This project is not in any way affiliated with, or endorsed by "Manor Lords" developer "Slavic Magic" or it's publisher "Hooded Horse"
+This project is in no way affiliated with or endorsed by "Manor Lords" developer "Slavic Magic" or it's publisher "Hooded Horse"
+
+For formal inquiries, contact me at any of the following emails: psiae.li@gmail.com psiae.li@outlook.com
 
 ```
   This Work is licensed under "Apache License 2.0"
@@ -8,6 +10,9 @@ This project is not in any way affiliated with, or endorsed by "Manor Lords" dev
 
   a copy of the license can be found in the LICENSE file in the repository containing this disclaimer
 ```
+
+#
+![Screenshot_65](https://github.com/user-attachments/assets/a82f74dd-550d-4408-97bf-0224f89b928c)
 
 # WIP
 [https://www.nexusmods.com/manorlords/mods/256](https://www.nexusmods.com/manorlords/mods/256)
@@ -23,5 +28,5 @@ Ergonomics, for me it's the most comfortable to work with at night.
 ### Will this app stay relevant after mod support is out ?
 Yes, even more.
 
-### Does this project accept contribution ?
-Yes, I'm not as experienced as you might expect, there will be plenty of open issue from me and others and you will be properly credited
+### Does this project accept source code contribution ?
+Yes, but only for open issues, you will be properly credited.
