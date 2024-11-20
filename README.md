@@ -4,7 +4,7 @@ This project is in no way affiliated with or endorsed by "Manor Lords" developer
 For formal inquiries, contact me at any of the following emails: psiae.li@gmail.com psiae.li@outlook.com
 
 ```
-Copyright 2024 Psiae
+Copyright 2024 Psiae Studio
 
 This Work is Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this work except in compliance with the License.
