@@ -116,7 +116,10 @@ class DirectInstallUEPakModScreenState(
                     pick.map { it.file }
                 }.also {
                     pickUEPakModsArchiveCompletion = it
-                    it.await()
+                    runCatching {
+                        it.await()
+                        Runtime.getRuntime().gc()
+                    }
                 }
             }
         }
@@ -133,7 +136,10 @@ class DirectInstallUEPakModScreenState(
                     mods
                 }.also {
                     pickUEPakModsArchiveCompletion = it
-                    it.await()
+                    runCatching {
+                        it.await()
+                        Runtime.getRuntime().gc()
+                    }
                 }
             }
         }

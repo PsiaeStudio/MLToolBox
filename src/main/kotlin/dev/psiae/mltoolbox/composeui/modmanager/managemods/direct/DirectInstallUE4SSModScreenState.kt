@@ -119,7 +119,10 @@ class DirectInstallUE4SSModScreenState(
                     pick.map { it.file }
                 }.also {
                     pickUE4SSModsArchiveCompletion = it
-                    it.await()
+                    runCatching {
+                        it.await()
+                        Runtime.getRuntime().gc()
+                    }
                 }
             }
         }
@@ -136,7 +139,10 @@ class DirectInstallUE4SSModScreenState(
                     mods
                 }.also {
                     pickUE4SSModsArchiveCompletion = it
-                    it.await()
+                    runCatching {
+                        it.await()
+                        Runtime.getRuntime().gc()
+                    }
                 }
             }
         }

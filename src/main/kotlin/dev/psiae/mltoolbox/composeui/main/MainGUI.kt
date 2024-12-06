@@ -36,6 +36,7 @@ fun MainGUI(
     prepareStdKtx()
     prepareUIFoundation()
     acquireProcessFileLock()
+    prepareGCRunner()
     prepareNativeLibs()
 
     application {
@@ -375,4 +376,22 @@ private fun prepareNativeLibs() = runCatching {
 }.onFailure { e ->
     DefaultExceptionWindow("fail to prepareNativeLibs", e)
     exitProcess(0)
+}
+
+
+private fun prepareGCRunner() {
+    @OptIn(DelicateCoroutinesApi::class)
+    GlobalScope.launch(Dispatchers.Default) {
+        runCatching {
+            while (isActive) {
+                delay(30.minutes)
+                Runtime.getRuntime().gc()
+            }
+        }.onFailure { e ->
+            if (isActive) {
+                DefaultExceptionWindow("failure in GC runner", e);
+                exitProcess(0)
+            }
+        }
+    }
 }

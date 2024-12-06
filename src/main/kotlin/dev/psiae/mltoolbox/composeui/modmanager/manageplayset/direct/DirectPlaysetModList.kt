@@ -100,6 +100,7 @@ private fun DirectModListLazyColumn(modListState: DirectModListState) {
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
+                            modifier = Modifier.weight(1f),
                             text = modData.name,
                             color = Material3Theme.colorScheme.onSurface,
                             style = Material3Theme.typography.bodyLarge

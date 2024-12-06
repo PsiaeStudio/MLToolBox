@@ -15,7 +15,7 @@ import java.util.*
 // https://github.com/NationalSecurityAgency/ghidra/blob/aac2cf7e9bd9b97a8a74234e7ffd52a0f0bada5f/Ghidra/Features/FileFormats/src/main/java/ghidra/file/formats/sevenzip/SevenZipCustomInitializer.java
 object SevenZipNativeLibInitializer {
 
-    const val SYSTEM_PROPERTY_TMP= "java.io.tmpdir"
+    const val SYSTEM_PROPERTY_TMP = "java.io.tmpdir"
     const val PROPERTY_SEVENZIPJBINDING_LIB_NAME = "lib.%s.name"
     const val PROPERTY_SEVENZIPJBINDING_LIB_HASH = "lib.%s.hash"
     const val SEVENZIPJBINDING_LIB_PROPERTIES_FILENAME = "sevenzipjbinding-lib.properties"
@@ -73,7 +73,8 @@ object SevenZipNativeLibInitializer {
             loadNativeLibraries(nativeLibraries)
             SevenZip.initLoadedLibraries()
         } catch (e: Exception) {
-            if (e is IOException || e is UnsupportedOperationException || e is SevenZipNativeInitializationException) {
+            // should we also catch RuntimeException ?
+            if (e is IOException || e is UnsupportedOperationException || e is SevenZipNativeInitializationException || e is RuntimeException) {
                 throw SevenZipNativeInitializationException("error initializing SevenZip native library", e)
             }
         }

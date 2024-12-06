@@ -8,7 +8,7 @@ plugins {
 }
 
 group = "dev.psiae"
-version = "v1.0.0-alpha06"
+version = "v1.0.0-alpha07"
 
 repositories {
     mavenCentral()
@@ -67,7 +67,7 @@ compose.desktop {
             copyright = "Copyright (C) 2024 Psiae"
             licenseFile.set(project.file("LICENSE"))
 
-            modules("jdk.unsupported")
+            modules("jdk.unsupported", "jdk.accessibility")
 
             windows {
                 iconFile.set(project.file("src/main/resources/drawable/icon_manorlords_logo_text.ico"))
@@ -97,7 +97,8 @@ afterEvaluate {
                 project.layout.projectDirectory.dir("resources").dir("common").file("LICENSE.txt").asFile
                     .copyTo(
                         target = task.destinationDir.get().dir(task.packageName.get()).file("LICENSE.txt").asFile,
-                        overwrite = true
+                        // we expect that the dir is empty
+                        overwrite = false
                     )
             }
         }

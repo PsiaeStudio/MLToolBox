@@ -116,7 +116,10 @@ class DirectInstallUE4SSScreenState(
                     pick.file
                 }.also {
                     pickUE4SSArchiveCompletion = it
-                    it.await()
+                    runCatching {
+                        it.await()
+                        Runtime.getRuntime().gc()
+                    }
                 }
             }
         }
@@ -134,7 +137,10 @@ class DirectInstallUE4SSScreenState(
                     file
                 }.also {
                     pickUE4SSArchiveCompletion = it
-                    it.await()
+                    runCatching {
+                        it.await()
+                        Runtime.getRuntime().gc()
+                    }
                 }
             }
         }
