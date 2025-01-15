@@ -1,27 +1,18 @@
+### Under Active Development
 ## Disclaimer
 This project is in no way affiliated with or endorsed by "Manor Lords" developer "Slavic Magic" or it's publisher "Hooded Horse"
 
 For formal inquiries, contact me at any of the following emails: psiae.li@gmail.com psiae.li@outlook.com
 
-```
-Copyright 2024 Psiae Studio
-
-This Work is Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this work except in compliance with the License.
-
-A copy of the License can be found in the LICENSE file in the repository containing this disclaimer
-or at the following site:
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-The Work including Contribution from Contributors is provided on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND.
-```
-
 #
 ![Screenshot_65](https://github.com/user-attachments/assets/a82f74dd-550d-4408-97bf-0224f89b928c)
 
-# WIP
+
 [https://www.nexusmods.com/manorlords/mods/256](https://www.nexusmods.com/manorlords/mods/256)
+
+## Supported Mod Loaders
+  1. [Unreal Engine Pak Patcher](https://dev.epicgames.com/documentation/en-us/unreal-engine/patching-content-delivery-and-dlc-in-unreal-engine)
+  2. [RE-UE4SS](https://github.com/UE4SS-RE/RE-UE4SS)
 
 ## FAQ
 
@@ -36,3 +27,18 @@ Yes, even more.
 
 ### Does this project accept source code contribution ?
 Yes, but only for open issues, you will be properly credited.
+
+#
+```
+Copyright 2024 Psiae Studio
+
+This Work is Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this work except in compliance with the License.
+
+A copy of the License can be found in the LICENSE file in the repository containing this disclaimer
+or at the following site:
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+The Work including Contribution from Contributors is provided on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND.
+```
