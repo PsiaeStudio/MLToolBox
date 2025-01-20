@@ -8,7 +8,7 @@ plugins {
 }
 
 group = "dev.psiae"
-version = "v1.0.0-alpha07"
+version = "v1.0.0-alpha08"
 
 repositories {
     mavenCentral()
@@ -64,7 +64,7 @@ compose.desktop {
             targetFormats(TargetFormat.Msi)
             packageName = "MLToolBox"
             packageVersion = "1.0.0"
-            copyright = "Copyright (C) 2024 Psiae"
+            copyright = "Copyright (C) 2024 - 2025, Psiae."
             licenseFile.set(project.file("LICENSE"))
 
             modules("jdk.unsupported", "jdk.accessibility")

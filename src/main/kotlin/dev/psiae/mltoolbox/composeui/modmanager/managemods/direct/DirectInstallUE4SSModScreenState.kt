@@ -121,7 +121,11 @@ class DirectInstallUE4SSModScreenState(
                     pickUE4SSModsArchiveCompletion = it
                     runCatching {
                         it.await()
-                        Runtime.getRuntime().gc()
+                    }.onFailure { t ->
+                        if (t is Exception) {
+                            Runtime.getRuntime().gc()
+                        }
+                        throw t
                     }
                 }
             }
@@ -141,7 +145,11 @@ class DirectInstallUE4SSModScreenState(
                     pickUE4SSModsArchiveCompletion = it
                     runCatching {
                         it.await()
-                        Runtime.getRuntime().gc()
+                    }.onFailure { t ->
+                        if (t is Exception) {
+                            Runtime.getRuntime().gc()
+                        }
+                        throw t
                     }
                 }
             }

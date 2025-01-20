@@ -118,7 +118,11 @@ class DirectInstallUEPakModScreenState(
                     pickUEPakModsArchiveCompletion = it
                     runCatching {
                         it.await()
-                        Runtime.getRuntime().gc()
+                    }.onFailure { t ->
+                        if (t is Exception) {
+                            Runtime.getRuntime().gc()
+                        }
+                        throw t
                     }
                 }
             }
@@ -138,7 +142,11 @@ class DirectInstallUEPakModScreenState(
                     pickUEPakModsArchiveCompletion = it
                     runCatching {
                         it.await()
-                        Runtime.getRuntime().gc()
+                    }.onFailure { t ->
+                        if (t is Exception) {
+                            Runtime.getRuntime().gc()
+                        }
+                        throw t
                     }
                 }
             }

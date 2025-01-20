@@ -1,6 +1,7 @@
 package dev.psiae.mltoolbox.composeui.modmanager.managemods.direct
 
 import androidx.compose.foundation.*
+import androidx.compose.foundation.draganddrop.dragAndDropTarget
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -10,6 +11,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draganddrop.DragAndDropEvent
+import androidx.compose.ui.draganddrop.DragAndDropTarget
+import androidx.compose.ui.draganddrop.DragData
+import androidx.compose.ui.draganddrop.dragData
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
@@ -24,8 +29,6 @@ import androidx.compose.ui.text.style.BaselineShift
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
-import dev.dexsr.gmod.palworld.toolbox.savegame.composeui.libint.DragData
-import dev.dexsr.gmod.palworld.toolbox.savegame.composeui.libint.onExternalDrag
 import dev.psiae.mltoolbox.composeui.HeightSpacer
 import dev.psiae.mltoolbox.composeui.LocalAwtWindow
 import dev.psiae.mltoolbox.composeui.WidthSpacer
@@ -252,41 +255,42 @@ private fun SelectUE4SSArchiveUICard(
                         )
                     }
                 } else if (ue4ssState.selectedUE4SSArchive == null) {
+                    val dragAndDropTarget = remember {
+                        object : DragAndDropTarget {
+                            override fun onEntered(event: DragAndDropEvent) {
+                                draggingInBoundState.value = true
+                            }
+
+                            override fun onExited(event: DragAndDropEvent) {
+                                draggingInBoundState.value = false
+                            }
+
+                            override fun onDrop(event: DragAndDropEvent): Boolean {
+                                draggingInBoundState.value = false
+                                ue4ssState.userDropUE4SSArchive(
+                                    jFile(URI((event.dragData() as DragData.FilesList).readFiles().first()))
+                                )
+                                return true
+                            }
+                        }
+                    }
+                    @OptIn(ExperimentalFoundationApi::class)
                     Column(
                         Modifier
                             .defaultMinSize(contentMinSize, contentMinSize)
-                            .onExternalDrag(
-                                LocalAwtWindow.current,
-                                onDragStart = { start ->
-                                    if (
-                                        start.dragData is DragData.FilesList &&
-                                        start.dragData.readFiles().let { files ->
-                                            files.size == 1 && files.first().let { file ->
-                                                jFile(file).isFile && file.endsWith(".zip")
+                            .dragAndDropTarget(
+                                shouldStartDragAndDrop = { event ->
+                                    val dragData = event.dragData()
+                                    val accept = dragData is DragData.FilesList &&
+                                        dragData.readFiles().let { files ->
+                                            files.size == 1 && files.first().let {
+                                                jFile(URI(it)).isFile && (it.endsWith(".zip", ignoreCase = true))
                                             }
                                         }
-                                    ) {
-                                        draggingInBoundState.value = true
-                                    }
+                                    return@dragAndDropTarget accept
                                 },
-                                onDrag = { drag ->
-                                },
-                                onDragExit = {
-                                    draggingInBoundState.value = false
-                                }
-                            ) { drop ->
-                                draggingInBoundState.value = false
-                                if (
-                                    drop.dragData is DragData.FilesList &&
-                                    drop.dragData.readFiles().let { files ->
-                                        files.size == 1 && files.first().let { file ->
-                                            jFile(file).isFile && file.endsWith(".zip")
-                                        }
-                                    }
-                                ) {
-                                    ue4ssState.userDropUE4SSArchive(jFile(URI(drop.dragData.readFiles().first())))
-                                }
-                            }
+                                target = dragAndDropTarget
+                            )
                             .then(
                                 if (draggingInBoundState.value && showInBoundEffect) {
                                     Modifier.border(

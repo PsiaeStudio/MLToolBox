@@ -138,6 +138,14 @@ class DirectLauncherScreenState(
                     }
                 }
 
+                val logicModsDir = jFile("$gameRoot\\Content\\Paks\\LogicMods")
+                if (logicModsDir.exists()) {
+                    if (!logicModsDir.toPath().deleteRecursivelyBool()) {
+                        notLaunchedErrMessage = "Could not delete ${jFile(gameRoot).name}\\Content\\Paks\\LogicMods directory recursively"
+                        return@withContext
+                    }
+                }
+
                 val process = runCatching {
                     launcherScreenState.modManagerScreenState.requireGameBinaryFile().absolutePath.let {
                         val processBuilder = ProcessBuilder("cmd.exe", "/c", "start", "", it)

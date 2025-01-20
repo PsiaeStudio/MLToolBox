@@ -1,6 +1,7 @@
 package dev.psiae.mltoolbox.composeui.modmanager.managemods.direct
 
 import androidx.compose.foundation.*
+import androidx.compose.foundation.draganddrop.dragAndDropTarget
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.*
@@ -10,6 +11,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draganddrop.DragAndDropEvent
+import androidx.compose.ui.draganddrop.DragAndDropTarget
+import androidx.compose.ui.draganddrop.DragData
+import androidx.compose.ui.draganddrop.dragData
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
@@ -21,8 +26,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.BaselineShift
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
-import dev.dexsr.gmod.palworld.toolbox.savegame.composeui.libint.DragData
-import dev.dexsr.gmod.palworld.toolbox.savegame.composeui.libint.onExternalDrag
 import dev.psiae.mltoolbox.composeui.HeightSpacer
 import dev.psiae.mltoolbox.composeui.LocalAwtWindow
 import dev.psiae.mltoolbox.composeui.WidthSpacer
@@ -232,49 +235,46 @@ private fun SelectModArchiveCard(
                         )
                     }
                 } else if (ue4ssState.selectedUE4SSModsArchive == null) {
+                    val dragAndDropTarget = remember {
+                        object : DragAndDropTarget {
+                            override fun onEntered(event: DragAndDropEvent) {
+                                draggingInBoundState.value = true
+                            }
+
+                            override fun onExited(event: DragAndDropEvent) {
+                                draggingInBoundState.value = false
+                            }
+
+                            override fun onDrop(event: DragAndDropEvent): Boolean {
+                                draggingInBoundState.value = false
+                                ue4ssState.userDropUE4SSModsArchive(
+                                    (event.dragData() as DragData.FilesList).readFiles().map {
+                                        jFile(URI(it))
+                                    }
+                                )
+                                return true
+                            }
+                        }
+                    }
+                    @OptIn(ExperimentalFoundationApi::class)
                     Column(
                         Modifier
                             .defaultMinSize(contentMinSize, contentMinSize)
-                            .onExternalDrag(
-                                LocalAwtWindow.current,
-                                onDragStart = { start ->
-                                    if (
-                                        start.dragData is DragData.FilesList &&
-                                        start.dragData.readFiles().let { files ->
+                            .dragAndDropTarget(
+                                shouldStartDragAndDrop = { event ->
+                                    val dragData = event.dragData()
+                                    val accept = dragData is DragData.FilesList &&
+                                        dragData.readFiles().let { files ->
                                             files.isNotEmpty() && files.all {
-                                                jFile(it).isFile || it.endsWith(".zip", ignoreCase = true) ||
+                                                jFile(URI(it)).isFile && (it.endsWith(".zip", ignoreCase = true) ||
                                                         it.endsWith(".rar", ignoreCase = true) ||
-                                                        it.endsWith(".7z", ignoreCase = true)
+                                                        it.endsWith(".7z", ignoreCase = true))
                                             }
                                         }
-                                    ) {
-                                        draggingInBoundState.value = true
-                                    }
+                                    return@dragAndDropTarget accept
                                 },
-                                onDrag = { drag ->
-                                },
-                                onDragExit = {
-                                    draggingInBoundState.value = false
-                                }
-                            ) { drop ->
-                                draggingInBoundState.value = false
-                                if (
-                                    drop.dragData is DragData.FilesList &&
-                                    drop.dragData.readFiles().let { files ->
-                                        files.isNotEmpty() && files.all {
-                                            jFile(it).isFile || it.endsWith(".zip", ignoreCase = true) ||
-                                                    it.endsWith(".rar", ignoreCase = true) ||
-                                                    it.endsWith(".7z", ignoreCase = true)
-                                        }
-                                    }
-                                ) {
-                                    ue4ssState.userDropUE4SSModsArchive(
-                                        drop.dragData.readFiles().map {
-                                            jFile(URI(it))
-                                        }
-                                    )
-                                }
-                            }
+                                target = dragAndDropTarget
+                            )
                             .then(
                                 if (draggingInBoundState.value && showInBoundEffect) {
                                     Modifier.border(
