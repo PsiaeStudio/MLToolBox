@@ -353,7 +353,7 @@ fun MainScreenLayoutBody() {
                 ) {
                     Text(
                         modifier = Modifier.align(Alignment.Center),
-                        text = MLToolBoxApp.RELEASE_VERSION,
+                        text = "v${MLToolBoxApp.RELEASE_VERSION}",
                         style = Material3Theme.typography.bodySmall,
                         color = Material3Theme.colorScheme.onSurface,
                         maxLines = 1

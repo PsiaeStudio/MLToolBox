@@ -124,7 +124,7 @@ class DirectInstallUE4SSScreenState(
                         },
                         onFailure = { t ->
                             if (t is Exception) {
-                                runCatching { Runtime.getRuntime().gc() }
+                                Runtime.getRuntime().gc()
                             }
                             throw t
                         }
@@ -154,7 +154,7 @@ class DirectInstallUE4SSScreenState(
                         },
                         onFailure = { t ->
                             if (t is Exception) {
-                                runCatching { Runtime.getRuntime().gc() }
+                                Runtime.getRuntime().gc()
                             }
                             throw t
                         }
@@ -220,21 +220,28 @@ class DirectInstallUE4SSScreenState(
                     .walk(PathWalkOption.INCLUDE_DIRECTORIES)
                     .sortedWith(Comparator.reverseOrder())
                     .forEach { f ->
-                        runCatching { f.deleteExisting() }
-                            .onFailure { e ->
-                                when (e) {
-                                    is NoSuchFileException, is DirectoryNotEmptyException, is IOException -> {
-                                        isLoading = false
-                                        isInvalidGameDirectory = true
-                                        statusMessage = "unable to delete ${f.toFile().let {
-                                            it.absolutePath
-                                                .drop(it.absolutePath.indexOf(userDir.absolutePath)+userDir.absolutePath.length)
-                                                .replace(' ', '\u00A0')
-                                        }} from app directory, it might be opened in another process"
-                                        return@withContext
-                                    }
+                        runCatching {
+                            if (!f.isWritable()) {
+                                val setWriteable = f.toFile().setWritable(true)
+                                if (!setWriteable)
+                                    throw IOException("Unable to make file Writable for deletion")
+                            }
+                            f.deleteExisting()
+                        }
+                        .onFailure { e ->
+                            when (e) {
+                                is NoSuchFileException, is DirectoryNotEmptyException, is IOException -> {
+                                    isLoading = false
+                                    isInvalidGameDirectory = true
+                                    statusMessage = "unable to delete ${f.toFile().let {
+                                        it.absolutePath
+                                            .drop(it.absolutePath.indexOf(userDir.absolutePath)+userDir.absolutePath.length)
+                                            .replace(' ', '\u00A0')
+                                    }} from app directory, it might be opened in another process"
+                                    return@withContext
                                 }
                             }
+                        }
                     }
 
             statusMessage = "extracting ..."
@@ -259,14 +266,14 @@ class DirectInstallUE4SSScreenState(
             if (!dwmApiDll) {
                 isLoading = false
                 isLastSelectedArchiveInvalid = true
-                statusMessage = "missing dwmapi.dll"
+                statusMessage = "missing 'dwmapi.dll', given archive is not the Mod Loader"
                 return@withContext
             }
             val ue4ssDll = jFile("$dir\\ue4ss\\UE4SS.dll").exists()
             if (!ue4ssDll) {
                 isLoading = false
                 isLastSelectedArchiveInvalid = true
-                statusMessage = "missing ue4ss\\UE4SS.dll"
+                statusMessage = "missing 'ue4ss\\UE4SS.dll', given archive is not the Mod Loader"
                 return@withContext
             }
             statusMessage = "preparing install ..."
@@ -354,21 +361,28 @@ class DirectInstallUE4SSScreenState(
                         .walk(PathWalkOption.INCLUDE_DIRECTORIES)
                         .sortedWith(Comparator.reverseOrder())
                         .forEach { f ->
-                            runCatching { f.deleteExisting() }
-                                .onFailure { e ->
-                                    when (e) {
-                                        is NoSuchFileException, is DirectoryNotEmptyException, is IOException -> {
-                                            isLoading = false
-                                            isInvalidGameDirectory = true
-                                            statusMessage = "unable to delete ${f.toFile().let {
-                                                it.absolutePath
-                                                    .drop(it.absolutePath.indexOf(gameDir.absolutePath)+gameDir.absolutePath.length)
-                                                    .replace(' ', '\u00A0')
-                                            }} from game directory, it might be opened in another process"
-                                            return@withContext
-                                        }
+                            runCatching {
+                                if (!f.isWritable()) {
+                                    val setWriteable = f.toFile().setWritable(true)
+                                    if (!setWriteable)
+                                        throw IOException("Unable to make file Writable for deletion")
+                                }
+                                f.deleteExisting()
+                            }
+                            .onFailure { e ->
+                                when (e) {
+                                    is NoSuchFileException, is DirectoryNotEmptyException, is IOException -> {
+                                        isLoading = false
+                                        isInvalidGameDirectory = true
+                                        statusMessage = "unable to delete ${f.toFile().let {
+                                            it.absolutePath
+                                                .drop(it.absolutePath.indexOf(gameDir.absolutePath)+gameDir.absolutePath.length)
+                                                .replace(' ', '\u00A0')
+                                        }} from game directory, it might be opened in another process"
+                                        return@withContext
                                     }
                                 }
+                            }
                         }
             }.onFailure { ex ->
                 throw ex

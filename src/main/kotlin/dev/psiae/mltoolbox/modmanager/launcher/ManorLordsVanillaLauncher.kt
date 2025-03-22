@@ -38,7 +38,7 @@ class ManorLordsVanillaLauncher(
             .split("\\")
             .let { split ->
                 if (split.size < 5) {
-                    error("unable to find target game binary root directory, split size to small=${split.size}")
+                    error("unable to find target game binary root directory, split size too small=${split.size}")
                 }
                 split.dropLast(4).joinToString("\\") to split.dropLast(3).joinToString("\\")
             }

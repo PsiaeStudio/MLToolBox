@@ -15,7 +15,6 @@ import io.github.vinceglb.filekit.core.PickerMode
 import io.github.vinceglb.filekit.core.PickerType
 import kotlinx.coroutines.*
 import net.lingala.zip4j.ZipFile
-import net.lingala.zip4j.exception.ZipException
 import net.sf.sevenzipjbinding.ArchiveFormat
 import net.sf.sevenzipjbinding.SevenZip
 import net.sf.sevenzipjbinding.SevenZipException
@@ -100,7 +99,7 @@ class DirectInstallUE4SSModScreenState(
                 isInvalidModsDirectory = false
                 isInstalledSuccessfully = false
                 statusMessage = null
-                async {
+                val pickTask = async {
                     val pick = FileKit.pickFile(
                         type = PickerType.File(listOf("zip", "rar", "7z")),
                         mode = PickerMode.Multiple(),
@@ -117,22 +116,21 @@ class DirectInstallUE4SSModScreenState(
                         return@async null
                     }
                     pick.map { it.file }
-                }.also {
-                    pickUE4SSModsArchiveCompletion = it
-                    runCatching {
-                        it.await()
-                    }.fold(
-                        onSuccess = {
-                            Runtime.getRuntime().gc()
-                        },
-                        onFailure = { t ->
-                            if (t is Exception) {
-                                runCatching { Runtime.getRuntime().gc() }
-                            }
-                            throw t
-                        }
-                    )
                 }
+                pickUE4SSModsArchiveCompletion = pickTask
+                runCatching {
+                    pickTask.await()
+                }.fold(
+                    onSuccess = {
+                        Runtime.getRuntime().gc()
+                    },
+                    onFailure = { t ->
+                        if (t is Exception) {
+                            Runtime.getRuntime().gc()
+                        }
+                        throw t
+                    }
+                )
             }
         }
     }
@@ -143,25 +141,24 @@ class DirectInstallUE4SSModScreenState(
         if (mods.isEmpty()) return
         coroutineScope.launch {
             if (pickUE4SSModsArchiveCompletion.isNullOrNotActive()) {
-                async {
+                val task = async {
                     processSelectedModsArchive(mods)
                     mods
-                }.also {
-                    pickUE4SSModsArchiveCompletion = it
-                    runCatching {
-                        it.await()
-                    }.fold(
-                        onSuccess = {
-                            Runtime.getRuntime().gc()
-                        },
-                        onFailure = { t ->
-                            if (t is Exception) {
-                                runCatching { Runtime.getRuntime().gc() }
-                            }
-                            throw t
-                        }
-                    )
                 }
+                pickUE4SSModsArchiveCompletion = task
+                runCatching {
+                    task.await()
+                }.fold(
+                    onSuccess = {
+                        Runtime.getRuntime().gc()
+                    },
+                    onFailure = { t ->
+                        if (t is Exception) {
+                            Runtime.getRuntime().gc()
+                        }
+                        throw t
+                    }
+                )
             }
         }
     }
@@ -222,21 +219,29 @@ class DirectInstallUE4SSModScreenState(
                     .walk(PathWalkOption.INCLUDE_DIRECTORIES)
                     .sortedWith(Comparator.reverseOrder())
                     .forEach { f ->
-                        runCatching { f.deleteExisting() }
-                            .onFailure { e ->
-                                when (e) {
-                                    is NoSuchFileException, is DirectoryNotEmptyException, is IOException -> {
-                                        isLoading = false
-                                        isInvalidModsDirectory = true
-                                        statusMessage = "unable to delete ${f.toFile().let {
-                                            it.absolutePath
-                                                .drop(it.absolutePath.indexOf(userDir.absolutePath)+userDir.absolutePath.length)
-                                                .replace(' ', '\u00A0')
-                                        }} from app directory, it might be opened in another process"
-                                        return@withContext
-                                    }
-                                }
+                        runCatching {
+                            if (!f.isWritable()) {
+                                val setWriteable = f.toFile().setWritable(true)
+                                if (!setWriteable)
+                                    throw IOException("Unable to make file Writable for deletion")
                             }
+                            f.deleteExisting()
+                        }
+                        .onFailure { e ->
+                            when (e) {
+                                is NoSuchFileException, is DirectoryNotEmptyException, is IOException -> {
+                                    isLoading = false
+                                    isInvalidModsDirectory = true
+                                    statusMessage = "unable to delete ${f.toFile().let {
+                                        it.absolutePath
+                                            .drop(it.absolutePath.indexOf(userDir.absolutePath)+userDir.absolutePath.length)
+                                            .replace(' ', '\u00A0')
+                                    }} from app directory, it might be used by another process"
+                                    return@withContext
+                                }
+                                else -> throw e
+                            }
+                        }
                     }
 
             statusMessage = "extracting ..."
@@ -365,6 +370,8 @@ class DirectInstallUE4SSModScreenState(
                 statusMessage = "error listing ue4ss_mods_install"
                 return@withContext
             }
+
+            var needLogicModsFolder = false
             listModsToBeInstalledArchiveDir.ifEmpty {
                 isLoading = false
                 isLastSelectedArchiveInvalid = true
@@ -381,11 +388,20 @@ class DirectInstallUE4SSModScreenState(
                 if (listFiles.isEmpty() || listFiles.size > 1 || !listFiles.first().isDirectory) {
                     isLoading = false
                     isLastSelectedArchiveInvalid = true
-                    statusMessage = "${archiveFile.name} must only contain one root directory"
+                    statusMessage = "'${archiveFile.name}' must only contain one root directory, given archive is not a UE4SS mod"
                     return@withContext
                 }
                 val file = listFiles.first()
                 listModsToBeInstalledDir.add(file)
+
+                val ae_bp = jFile(file, "ae_bp")
+                if (ae_bp.exists() && ae_bp.isDirectory) {
+                    val modBP = jFile(ae_bp, "${file.name}.pak")
+                    if (modBP.exists()) {
+                        needLogicModsFolder = true
+                    }
+                }
+
                 val dllsMain = jFile("$file\\dlls\\main.dll")
                 if (dllsMain.exists())
                     return@forEach
@@ -394,7 +410,7 @@ class DirectInstallUE4SSModScreenState(
                     return@forEach
                 isLoading = false
                 isLastSelectedArchiveInvalid = true
-                statusMessage = "${file.name} is missing entry point (dlls\\main.dll or Scripts\\main.lua)"
+                statusMessage = "'${file.name}' is missing entry point (dlls\\main.dll or Scripts\\main.lua), given archive is not a UE4SS mod"
                 return@withContext
             }
 
@@ -411,7 +427,7 @@ class DirectInstallUE4SSModScreenState(
             if (!ue4ssDir.exists() || !ue4ssDir.isDirectory) {
                 isLoading = false
                 isInvalidModsDirectory = true
-                statusMessage = "missing ${gameDir.name}\\ue4ss directory"
+                statusMessage = "missing ue4ss directory, make sure 'RE-UE4SS' Mod Loader is already installed"
                 return@withContext
             }
 
@@ -421,7 +437,7 @@ class DirectInstallUE4SSModScreenState(
             if (!modsDir.exists() || !modsDir.isDirectory) {
                 isLoading = false
                 isInvalidModsDirectory = true
-                statusMessage = "missing ${gameDir.name}\\ue4ss\\Mods directory"
+                statusMessage = "missing ue4ss\\Mods directory"
                 return@withContext
             }
 
@@ -486,22 +502,90 @@ class DirectInstallUE4SSModScreenState(
                     .walk(PathWalkOption.INCLUDE_DIRECTORIES)
                     .sortedWith(Comparator.reverseOrder())
                     .forEach { f ->
-                        runCatching { f.deleteExisting() }
-                            .onFailure { e ->
-                                when (e) {
-                                    is NoSuchFileException, is DirectoryNotEmptyException, is IOException -> {
-                                        isLoading = false
-                                        isInvalidModsDirectory = true
-                                        statusMessage = "unable to delete ${f.toFile().let {
-                                            it.absolutePath
-                                                .drop(it.absolutePath.indexOf(gameDir.absolutePath)+gameDir.absolutePath.length)
-                                                .replace(' ', '\u00A0')
-                                        }} from game directory, it might be opened in another process"
-                                    }
-                                }
+                        runCatching {
+                            if (!f.isWritable()) {
+                                val setWriteable = f.toFile().setWritable(true)
+                                if (!setWriteable)
+                                    throw IOException("Unable to make file Writable for deletion")
                             }
+                            f.deleteExisting()
+                        }.onFailure { e ->
+                            when (e) {
+                                is NoSuchFileException, is DirectoryNotEmptyException, is IOException -> {
+                                    isLoading = false
+                                    isInvalidModsDirectory = true
+                                    statusMessage = "unable to delete ${f.toFile().let {
+                                        it.absolutePath
+                                            .drop(it.absolutePath.indexOf(gameDir.absolutePath)+gameDir.absolutePath.length)
+                                            .replace(' ', '\u00A0')
+                                    }} from game directory, it might be opened in another process"
+                                    return@withContext
+                                }
+                                else -> throw e
+                            }
+                        }
                     }
             }
+
+            if (needLogicModsFolder) run {
+                statusMessage = "preparing LogicMods dir ..."
+
+                val (unrealGameRoot, gameRoot) = gameBinaryFile.absolutePath
+                    .split("\\")
+                    .let { split ->
+                        if (split.size < 5) {
+                            isLoading = false
+                            isInvalidModsDirectory = true
+                            statusMessage = "unable to find target game binary root directory, split size to small=${split.size}"
+                            return@withContext
+                        }
+                        split.dropLast(4).joinToString("\\") to split.dropLast(3).joinToString("\\")
+                    }
+                val pakDir = jFile("$gameRoot\\Content\\Paks")
+                val logicModsDir = jFile(pakDir, "LogicMods")
+                if (!logicModsDir.exists() && !logicModsDir.mkdir()) {
+                    isLoading = false
+                    isInvalidModsDirectory = true
+                    statusMessage = "Unable to create LogicMods directory"
+                    return@withContext
+                }
+                if (logicModsDir.exists() && !logicModsDir.isDirectory) {
+                    isLoading = false
+                    isInvalidModsDirectory = true
+                    statusMessage = "LogicMods folder exist but is not a directory"
+                    return@withContext
+                }
+
+                listModsToBeInstalledDir.forEach { file ->
+                    val ae_bp = jFile(file, "ae_bp")
+                    if (ae_bp.exists() && ae_bp.isDirectory) {
+                        val modBP = jFile(ae_bp, "${file.name}.pak")
+                        if (modBP.exists()) {
+
+                            val logicModsDir = jFile("$gameRoot\\Content\\Paks\\LogicMods")
+                            if (!logicModsDir.isDirectory) {
+                                isLoading = false
+                                isInvalidModsDirectory = true
+                                statusMessage = "$gameRoot\\Content\\Paks\\LogicMods is not directory"
+                                return@withContext
+                            }
+                            val targetFile = jFile(logicModsDir, modBP.name)
+                            if (targetFile.exists()) {
+                                if (!targetFile.delete()) {
+                                    isLoading = false
+                                    isInvalidModsDirectory = true
+                                    statusMessage = "unable to delete ${targetFile.let {
+                                        it.absolutePath
+                                            .replace(' ', '\u00A0')
+                                    }}, it might be opened in another process"
+                                    return@withContext
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
 
             statusMessage = "installing ..."
             runCatching {
@@ -509,7 +593,7 @@ class DirectInstallUE4SSModScreenState(
                     it.toPath().copyToRecursively(
                         target = jFile("$modsDir\\${it.name}").toPath(),
                         followLinks = false,
-                        overwrite = true
+                        overwrite = false
                     )
                 }
             }.onFailure { ex ->
@@ -520,13 +604,67 @@ class DirectInstallUE4SSModScreenState(
                         "unable to copy recursively, source file is missing"
                     }
                     is FileAlreadyExistsException -> {
-                        "unable to copy recursively, target file is not writeable"
+                        "unable to copy recursively, target file already exist"
                     }
                     is AccessDeniedException -> {
                         "unable to copy recursively, access denied"
                     }
                     is IOException -> {
                         "unable to copy recursively, IO error"
+                    }
+                    else -> throw ex
+                }
+                return@withContext
+            }
+
+
+            runCatching {
+                val (unrealGameRoot, gameRoot) = gameBinaryFile.absolutePath
+                    .split("\\")
+                    .let { split ->
+                        if (split.size < 5) {
+                            isLoading = false
+                            isInvalidModsDirectory = true
+                            statusMessage = "unable to find target game binary root directory, split size to small=${split.size}"
+                            return@withContext
+                        }
+                        split.dropLast(4).joinToString("\\") to split.dropLast(3).joinToString("\\")
+                    }
+                listModsToBeInstalledDir
+                    .forEach { mod ->
+                        val ae_bp = jFile(mod, "ae_bp")
+                        if (ae_bp.exists() && ae_bp.isDirectory) {
+                            val modBP = jFile(ae_bp, "${mod.name}.pak")
+                            if (modBP.exists()) {
+                                // move to LogicMods
+
+                                val logicModsDir = jFile("$gameRoot\\Content\\Paks\\LogicMods")
+                                if (!logicModsDir.isDirectory) {
+                                    isLoading = false
+                                    isInvalidModsDirectory = true
+                                    statusMessage = "$gameRoot\\Content\\Paks\\LogicMods is not directory"
+                                    return@withContext
+                                }
+                                val targetFile = jFile(logicModsDir, modBP.name)
+                                modBP.toPath().copyTo(targetFile.toPath(), overwrite = false)
+                            }
+                        }
+                    }
+            }.onFailure { ex ->
+                isLoading = false
+                isInvalidModsDirectory = true
+                statusMessage = when (ex) {
+                    is FileNotFoundException -> {
+                        "unable to copy bp file, source file is missing"
+                    }
+                    is FileAlreadyExistsException -> {
+                        "unable to copy bp file, target file already exist"
+                    }
+                    is AccessDeniedException -> {
+                        "unable to copy bp file, access denied"
+                    }
+                    is IOException -> {
+                        "unable to copy bp file, IO error"
                     }
                     else -> throw ex
                 }

@@ -124,7 +124,7 @@ class DirectInstallUEPakModScreenState(
                         },
                         onFailure = { t ->
                             if (t is Exception) {
-                                runCatching { Runtime.getRuntime().gc() }
+                                Runtime.getRuntime().gc()
                             }
                             throw t
                         }
@@ -153,7 +153,7 @@ class DirectInstallUEPakModScreenState(
                         },
                         onFailure = { t ->
                             if (t is Exception) {
-                                runCatching { Runtime.getRuntime().gc() }
+                                Runtime.getRuntime().gc()
                             }
                             throw t
                         }
@@ -219,21 +219,29 @@ class DirectInstallUEPakModScreenState(
                     .walk(PathWalkOption.INCLUDE_DIRECTORIES)
                     .sortedWith(Comparator.reverseOrder())
                     .forEach { f ->
-                        runCatching { f.deleteExisting() }
-                            .onFailure { e ->
-                                when (e) {
-                                    is NoSuchFileException, is DirectoryNotEmptyException, is IOException -> {
-                                        isLoading = false
-                                        isInvalidModsDirectory = true
-                                        statusMessage = "unable to delete ${f.toFile().let {
-                                            it.absolutePath
-                                                .drop(it.absolutePath.indexOf(userDir.absolutePath)+userDir.absolutePath.length)
-                                                .replace(' ', '\u00A0')
-                                        }} from app directory, it might be opened in another process"
-                                        return@withContext
-                                    }
-                                }
+                        runCatching {
+                            if (!f.isWritable()) {
+                                val setWriteable = f.toFile().setWritable(true)
+                                if (!setWriteable)
+                                    throw IOException("Unable to make file Writable for deletion")
                             }
+                            f.deleteExisting()
+                        }
+                        .onFailure { e ->
+                            when (e) {
+                                is NoSuchFileException, is DirectoryNotEmptyException, is IOException -> {
+                                    isLoading = false
+                                    isInvalidModsDirectory = true
+                                    statusMessage = "unable to delete ${f.toFile().let {
+                                        it.absolutePath
+                                            .drop(it.absolutePath.indexOf(userDir.absolutePath)+userDir.absolutePath.length)
+                                            .replace(' ', '\u00A0')
+                                    }} from app directory, it might be opened in another process"
+                                    return@withContext
+                                }
+                                else -> throw e
+                            }
+                        }
                     }
 
             statusMessage = "extracting ..."
@@ -382,7 +390,7 @@ class DirectInstallUEPakModScreenState(
                 }) {
                     isLoading = false
                     isLastSelectedArchiveInvalid = true
-                    statusMessage = "${archiveFile.name} must only contain one root file or one root directory"
+                    statusMessage = "'${archiveFile.name}' must only contain one root file or one root directory, given archive is not a Pak mod"
                     return@withContext
                 }
                 val file = run {
@@ -402,7 +410,7 @@ class DirectInstallUEPakModScreenState(
                     if (rootFiles.isEmpty() || rootFiles.size > 1) {
                         isLoading = false
                         isLastSelectedArchiveInvalid = true
-                        statusMessage = "${archiveFile.name} must only contain one root file or one root directory with single file"
+                        statusMessage = "'${archiveFile.name}' must only contain one root file or one root directory with single file, given archive is not a Pak mod"
                         return@withContext
                     }
                     rootFiles.first()
@@ -412,7 +420,7 @@ class DirectInstallUEPakModScreenState(
                     return@forEach
                 isLoading = false
                 isLastSelectedArchiveInvalid = true
-                statusMessage = "${file.name} is missing entry point (${file.nameWithoutExtension}.pak)"
+                statusMessage = "'${file.name}' is missing entry point '*.pak', given archive is not a Pak mod"
                 return@withContext
             }
 
@@ -431,7 +439,7 @@ class DirectInstallUEPakModScreenState(
             if (!paksDir.exists() || !paksDir.isDirectory) {
                 isLoading = false
                 isInvalidModsDirectory = true
-                statusMessage = "missing ${unrealGameRoot}\\$gameRoot\\Content\\Paks directory"
+                statusMessage = "missing $gameRoot\\Content\\Paks directory"
                 return@withContext
             }
 
@@ -440,7 +448,7 @@ class DirectInstallUEPakModScreenState(
                 if (!modsDir.mkdir()) {
                     isLoading = false
                     isInvalidModsDirectory = true
-                    statusMessage = "unable to create ${unrealGameRoot}\\\$gameRoot\\Content\\Paks directory"
+                    statusMessage = "unable to create $gameRoot\\Content\\Paks directory"
                     return@withContext
                 }
             }
@@ -508,21 +516,28 @@ class DirectInstallUEPakModScreenState(
                     .walk(PathWalkOption.INCLUDE_DIRECTORIES)
                     .sortedWith(Comparator.reverseOrder())
                     .forEach { f ->
-                        runCatching { f.deleteExisting() }
-                            .onFailure { e ->
-                                when (e) {
-                                    is NoSuchFileException, is DirectoryNotEmptyException, is IOException -> {
-                                        isLoading = false
-                                        isInvalidModsDirectory = true
-                                        statusMessage = "unable to delete ${f.toFile().let {
-                                            it.absolutePath
-                                                .drop(it.absolutePath.indexOf(paksDir.absolutePath)+paksDir.absolutePath.length)
-                                                .replace(' ', '\u00A0')
-                                        }} from game paks directory, it might be opened in another process"
-                                        return@withContext
-                                    }
+                        runCatching {
+                            if (!f.isWritable()) {
+                                val setWriteable = f.toFile().setWritable(true)
+                                if (!setWriteable)
+                                    throw IOException("Unable to make file Writable for deletion")
+                            }
+                            f.deleteExisting()
+                        }
+                        .onFailure { e ->
+                            when (e) {
+                                is NoSuchFileException, is DirectoryNotEmptyException, is IOException -> {
+                                    isLoading = false
+                                    isInvalidModsDirectory = true
+                                    statusMessage = "unable to delete ${f.toFile().let {
+                                        it.absolutePath
+                                            .drop(it.absolutePath.indexOf(paksDir.absolutePath)+paksDir.absolutePath.length)
+                                            .replace(' ', '\u00A0')
+                                    }} from game paks directory, it might be opened in another process"
+                                    return@withContext
                                 }
                             }
+                        }
                     }
             }
 
